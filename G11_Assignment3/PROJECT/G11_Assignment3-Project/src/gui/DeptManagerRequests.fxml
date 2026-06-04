@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox alignment="TOP_CENTER" spacing="15" xmlns:fx="http://javafx.com/fxml" fx:controller="gui.DeptManagerRequestsController" style="-fx-padding: 20;">
+    <Label text="Pending requests" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #2d6a4f;"/>
+    <Label text="Parameter change requests" style="-fx-text-fill: #c0c0d8; -fx-font-size: 14px; -fx-font-weight: bold;"/>
+    <TableView fx:id="paramRequestsTable" prefHeight="180">
+        <placeholder><Label text="No pending parameter requests"/></placeholder>
+        <columns>
+            <TableColumn fx:id="colParamId" text="ID" prefWidth="40"/>
+            <TableColumn fx:id="colParamPark" text="Park" prefWidth="80"/>
+            <TableColumn fx:id="colParamName" text="Parameter" prefWidth="140"/>
+            <TableColumn fx:id="colOldVal" text="Old Value" prefWidth="80"/>
+            <TableColumn fx:id="colNewVal" text="New Value" prefWidth="80"/>
+            <TableColumn fx:id="colParamStatus" text="Status" prefWidth="80"/>
+        </columns>
+    </TableView>
+    <HBox spacing="10" alignment="CENTER">
+        <Button text="Approve" onAction="#handleApproveParam" style="-fx-background-color: #2d6a4f; -fx-text-fill: white; -fx-background-radius: 8;"/>
+        <Button text="Reject" onAction="#handleRejectParam" style="-fx-background-color: #e94560; -fx-text-fill: white; -fx-background-radius: 8;"/>
+        <Button text="Refresh" onAction="#loadRequests" style="-fx-background-color: #0f3460; -fx-text-fill: #c0c0d8; -fx-background-radius: 8;"/>
+    </HBox>
+    <Separator/>
+    <Label text="Promotion requests" style="-fx-text-fill: #c0c0d8; -fx-font-size: 14px; -fx-font-weight: bold;"/>
+    <TableView fx:id="promoRequestsTable" prefHeight="150">
+        <placeholder><Label text="No pending promotion requests"/></placeholder>
+        <columns>
+            <TableColumn fx:id="colPromoId" text="ID" prefWidth="40"/>
+            <TableColumn fx:id="colPromoPark" text="Park" prefWidth="80"/>
+            <TableColumn fx:id="colDiscount" text="Discount %" prefWidth="80"/>
+            <TableColumn fx:id="colStart" text="Start" prefWidth="90"/>
+            <TableColumn fx:id="colEnd" text="End" prefWidth="90"/>
+            <TableColumn fx:id="colDesc" text="Description" prefWidth="120"/>
+            <TableColumn fx:id="colPromoStatus" text="Status" prefWidth="70"/>
+        </columns>
+    </TableView>
+    <HBox spacing="10" alignment="CENTER">
+        <Button text="Approve" onAction="#handleApprovePromo" style="-fx-background-color: #2d6a4f; -fx-text-fill: white; -fx-background-radius: 8;"/>
+        <Button text="Reject" onAction="#handleRejectPromo" style="-fx-background-color: #e94560; -fx-text-fill: white; -fx-background-radius: 8;"/>
+    </HBox>
+    <Label fx:id="statusLabel" text=""/>
+</VBox>

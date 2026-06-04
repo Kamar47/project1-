@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<BorderPane fx:id="mainBorderPane" xmlns:fx="http://javafx.com/fxml" fx:controller="gui.DepartmentManagerFrameController"
+            style="-fx-background-color: #1a1a2e;" prefWidth="950" prefHeight="700">
+    <left>
+        <VBox spacing="5" style="-fx-background-color: #16213e; -fx-padding: 10; -fx-min-width: 160;" alignment="TOP_CENTER">
+            <Label text="GoNature" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2d6a4f; -fx-padding: 10 0 20 0;"/>
+            <Label fx:id="workerNameLabel" text="Dept. Manager" style="-fx-text-fill: #a0a0b8; -fx-font-size: 11px; -fx-padding: 0 0 10 0;"/>
+            <Button text="Profile" onAction="#showProfile" prefWidth="140" style="-fx-background-color: #0f3460; -fx-text-fill: #c0c0d8; -fx-background-radius: 8;"/>
+            <Button text="Park Parameters" onAction="#showParkParameters" prefWidth="140" style="-fx-background-color: #0f3460; -fx-text-fill: #c0c0d8; -fx-background-radius: 8;" wrapText="true"/>
+            <Button text="Reports" onAction="#showReports" prefWidth="140" style="-fx-background-color: #0f3460; -fx-text-fill: #c0c0d8; -fx-background-radius: 8;"/>
+            <Button text="Requests" onAction="#showRequests" prefWidth="140" style="-fx-background-color: #0f3460; -fx-text-fill: #c0c0d8; -fx-background-radius: 8;"/>
+            <VBox VBox.vgrow="ALWAYS"/>
+            <Button text="Logout" onAction="#handleLogout" prefWidth="140" style="-fx-background-color: #e94560; -fx-text-fill: white; -fx-background-radius: 8;"/>
+        </VBox>
+    </left>
+    <center>
+        <VBox fx:id="contentArea" alignment="TOP_CENTER" style="-fx-padding: 20;">
+            <Label text="Department Manager" style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #2d6a4f;"/>
+            <Label text="Select an option from the menu" style="-fx-text-fill: #a0a0b8;"/>
+        </VBox>
+    </center>
+</BorderPane>

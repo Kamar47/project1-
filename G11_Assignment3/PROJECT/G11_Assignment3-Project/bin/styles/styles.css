@@ -1,0 +1,72 @@
+/* GoNature Dark Theme */
+.root {
+    -fx-background-color: #1a1a2e;
+    -fx-font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+.label { -fx-text-fill: #c0c0d8; }
+
+.text-field, .password-field {
+    -fx-background-color: #16213e;
+    -fx-text-fill: #e0e0f0;
+    -fx-border-color: #0f3460;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 8;
+    -fx-prompt-text-fill: #606080;
+}
+.text-field:focused, .password-field:focused { -fx-border-color: #2d6a4f; }
+
+.button {
+    -fx-background-color: #0f3460;
+    -fx-text-fill: #c0c0d8;
+    -fx-background-radius: 8;
+    -fx-padding: 8 20;
+    -fx-cursor: hand;
+}
+.button:hover { -fx-background-color: #1a4a7a; }
+.button:pressed { -fx-background-color: #0a2a50; }
+
+.button-primary {
+    -fx-background-color: #2d6a4f;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+.button-primary:hover { -fx-background-color: #3d8a6f; }
+
+.button-danger {
+    -fx-background-color: #e94560;
+    -fx-text-fill: white;
+}
+.button-danger:hover { -fx-background-color: #ff6b81; }
+
+.table-view {
+    -fx-background-color: #16213e;
+    -fx-border-color: #0f3460;
+    -fx-border-radius: 6;
+}
+.table-view .column-header-background { -fx-background-color: #0f3460; }
+.table-view .column-header .label { -fx-text-fill: #c0c0d8; -fx-font-weight: bold; }
+.table-view .table-cell { -fx-text-fill: #e0e0f0; -fx-border-color: transparent; }
+.table-view .table-row-cell { -fx-background-color: #1a1a2e; }
+.table-view .table-row-cell:odd { -fx-background-color: #16213e; }
+.table-view .table-row-cell:selected { -fx-background-color: #0f3460; }
+
+.combo-box {
+    -fx-background-color: #16213e;
+    -fx-border-color: #0f3460;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+}
+
+.text-area {
+    -fx-control-inner-background: #0d1b2a;
+    -fx-text-fill: #e0e0f0;
+    -fx-font-family: 'Consolas', monospace;
+}
+
+.separator .line { -fx-border-color: #0f3460; }
+
+.scroll-pane { -fx-background-color: transparent; }
+
+.date-picker { -fx-background-color: #16213e; -fx-border-color: #0f3460; -fx-border-radius: 6; }

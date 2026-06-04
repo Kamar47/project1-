@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox alignment="TOP_CENTER" spacing="15" xmlns:fx="http://javafx.com/fxml" fx:controller="gui.DeptManagerParkParamsController" style="-fx-padding: 20;">
+    <Label text="Park parameters" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #2d6a4f;"/>
+    <HBox spacing="10" alignment="CENTER">
+        <Label text="Select park:" style="-fx-text-fill: #c0c0d8;"/>
+        <ComboBox fx:id="parkCombo" prefWidth="200"/>
+        <Button text="Get park parameters" onAction="#handleGetParams" style="-fx-background-color: #2d6a4f; -fx-text-fill: white; -fx-background-radius: 8;"/>
+    </HBox>
+    <VBox fx:id="paramsBox" spacing="8" visible="false" managed="false"
+          style="-fx-background-color: #16213e; -fx-padding: 20; -fx-background-radius: 10; -fx-border-color: #0f3460; -fx-border-radius: 10;" maxWidth="450">
+        <HBox spacing="10"><Label text="Park name:" style="-fx-text-fill: #808098; -fx-min-width: 160;"/><Label fx:id="nameLabel" style="-fx-text-fill: #e0e0f0; -fx-font-weight: bold;"/></HBox>
+        <HBox spacing="10"><Label text="Current visitors:" style="-fx-text-fill: #808098; -fx-min-width: 160;"/><Label fx:id="currentLabel" style="-fx-text-fill: #f5a623; -fx-font-weight: bold;"/></HBox>
+        <HBox spacing="10"><Label text="Max visitors:" style="-fx-text-fill: #808098; -fx-min-width: 160;"/><Label fx:id="maxLabel" style="-fx-text-fill: #e0e0f0;"/></HBox>
+        <HBox spacing="10"><Label text="Walk-in gap:" style="-fx-text-fill: #808098; -fx-min-width: 160;"/><Label fx:id="gapLabel" style="-fx-text-fill: #e0e0f0;"/></HBox>
+        <HBox spacing="10"><Label text="Capacity:" style="-fx-text-fill: #808098; -fx-min-width: 160;"/><Label fx:id="capacityLabel" style="-fx-text-fill: #e0e0f0;"/></HBox>
+        <HBox spacing="10"><Label text="Stay time:" style="-fx-text-fill: #808098; -fx-min-width: 160;"/><Label fx:id="stayLabel" style="-fx-text-fill: #e0e0f0;"/></HBox>
+    </VBox>
+    <Label fx:id="statusLabel" text=""/>
+</VBox>

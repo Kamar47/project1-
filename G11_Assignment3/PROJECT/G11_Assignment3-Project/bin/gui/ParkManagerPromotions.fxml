@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox alignment="TOP_CENTER" spacing="15" xmlns:fx="http://javafx.com/fxml" fx:controller="gui.ParkManagerPromotionsController" style="-fx-padding: 20;">
+    <Label text="Promotions" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #2d6a4f;"/>
+    <Label text="Create a new promotion (requires department manager approval)" style="-fx-text-fill: #a0a0b8; -fx-font-size: 11px;"/>
+    <VBox spacing="10" style="-fx-background-color: #16213e; -fx-padding: 20; -fx-background-radius: 10; -fx-border-color: #0f3460; -fx-border-radius: 10;" maxWidth="450">
+        <HBox spacing="10" alignment="CENTER_LEFT">
+            <Label text="Discount (%):" style="-fx-text-fill: #c0c0d8; -fx-min-width: 120;"/>
+            <TextField fx:id="discountField" prefWidth="100" promptText="e.g. 20"
+                       style="-fx-background-color: #0d1b2a; -fx-text-fill: #e0e0f0; -fx-border-color: #0f3460; -fx-border-radius: 5; -fx-background-radius: 5;"/>
+        </HBox>
+        <HBox spacing="10" alignment="CENTER_LEFT">
+            <Label text="Start date:" style="-fx-text-fill: #c0c0d8; -fx-min-width: 120;"/>
+            <DatePicker fx:id="startDatePicker" prefWidth="180"/>
+        </HBox>
+        <HBox spacing="10" alignment="CENTER_LEFT">
+            <Label text="End date:" style="-fx-text-fill: #c0c0d8; -fx-min-width: 120;"/>
+            <DatePicker fx:id="endDatePicker" prefWidth="180"/>
+        </HBox>
+        <HBox spacing="10" alignment="CENTER_LEFT">
+            <Label text="Description:" style="-fx-text-fill: #c0c0d8; -fx-min-width: 120;"/>
+            <TextField fx:id="descriptionField" prefWidth="250" promptText="Promotion description"
+                       style="-fx-background-color: #0d1b2a; -fx-text-fill: #e0e0f0; -fx-border-color: #0f3460; -fx-border-radius: 5; -fx-background-radius: 5;"/>
+        </HBox>
+    </VBox>
+    <Label fx:id="statusLabel" text=""/>
+    <Button text="Submit promotion" onAction="#handleSubmit" style="-fx-background-color: #2d6a4f; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 8 25;"/>
+</VBox>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox alignment="TOP_CENTER" spacing="15" xmlns:fx="http://javafx.com/fxml" fx:controller="gui.RegisterSubscriberController" style="-fx-padding: 20;">
+    <Label text="Register subscriber (family club)" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #2d6a4f;"/>
+    <GridPane hgap="12" vgap="10" alignment="CENTER" maxWidth="400">
+        <Label text="ID number:" style="-fx-text-fill: #c0c0d8;" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+        <TextField fx:id="idField" prefWidth="200" GridPane.columnIndex="1" GridPane.rowIndex="0" style="-fx-background-color: #16213e; -fx-text-fill: #e0e0f0; -fx-border-color: #0f3460; -fx-border-radius: 5; -fx-background-radius: 5;"/>
+        <Label text="First name:" style="-fx-text-fill: #c0c0d8;" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+        <TextField fx:id="firstNameField" prefWidth="200" GridPane.columnIndex="1" GridPane.rowIndex="1" style="-fx-background-color: #16213e; -fx-text-fill: #e0e0f0; -fx-border-color: #0f3460; -fx-border-radius: 5; -fx-background-radius: 5;"/>
+        <Label text="Last name:" style="-fx-text-fill: #c0c0d8;" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+        <TextField fx:id="lastNameField" prefWidth="200" GridPane.columnIndex="1" GridPane.rowIndex="2" style="-fx-background-color: #16213e; -fx-text-fill: #e0e0f0; -fx-border-color: #0f3460; -fx-border-radius: 5; -fx-background-radius: 5;"/>
+        <Label text="Phone:" style="-fx-text-fill: #c0c0d8;" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+        <TextField fx:id="phoneField" prefWidth="200" GridPane.columnIndex="1" GridPane.rowIndex="3" style="-fx-background-color: #16213e; -fx-text-fill: #e0e0f0; -fx-border-color: #0f3460; -fx-border-radius: 5; -fx-background-radius: 5;"/>
+        <Label text="Email:" style="-fx-text-fill: #c0c0d8;" GridPane.columnIndex="0" GridPane.rowIndex="4"/>
+        <TextField fx:id="emailField" prefWidth="200" GridPane.columnIndex="1" GridPane.rowIndex="4" style="-fx-background-color: #16213e; -fx-text-fill: #e0e0f0; -fx-border-color: #0f3460; -fx-border-radius: 5; -fx-background-radius: 5;"/>
+        <Label text="Family members:" style="-fx-text-fill: #c0c0d8;" GridPane.columnIndex="0" GridPane.rowIndex="5"/>
+        <TextField fx:id="familyField" prefWidth="200" GridPane.columnIndex="1" GridPane.rowIndex="5" style="-fx-background-color: #16213e; -fx-text-fill: #e0e0f0; -fx-border-color: #0f3460; -fx-border-radius: 5; -fx-background-radius: 5;"/>
+        <Label text="Credit card (optional):" style="-fx-text-fill: #c0c0d8;" GridPane.columnIndex="0" GridPane.rowIndex="6"/>
+        <TextField fx:id="creditCardField" prefWidth="200" GridPane.columnIndex="1" GridPane.rowIndex="6" style="-fx-background-color: #16213e; -fx-text-fill: #e0e0f0; -fx-border-color: #0f3460; -fx-border-radius: 5; -fx-background-radius: 5;"/>
+    </GridPane>
+    <Label fx:id="statusLabel" text=""/>
+    <Button text="Register" onAction="#handleRegister" style="-fx-background-color: #2d6a4f; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 8 30;"/>
+</VBox>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox alignment="TOP_CENTER" spacing="15" xmlns:fx="http://javafx.com/fxml" fx:controller="gui.ProfileController"
+      style="-fx-padding: 20;">
+    <Label text="Profile" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #2d6a4f;"/>
+    <VBox spacing="10" style="-fx-background-color: #16213e; -fx-padding: 20; -fx-background-radius: 10; -fx-border-color: #0f3460; -fx-border-radius: 10;" maxWidth="400">
+        <HBox spacing="10"><Label text="Name:" style="-fx-text-fill: #808098; -fx-min-width: 120;"/><Label fx:id="nameLabel" style="-fx-text-fill: #e0e0f0; -fx-font-weight: bold;"/></HBox>
+        <HBox spacing="10"><Label text="ID:" style="-fx-text-fill: #808098; -fx-min-width: 120;"/><Label fx:id="idLabel" style="-fx-text-fill: #e0e0f0;"/></HBox>
+        <HBox spacing="10"><Label text="Email:" style="-fx-text-fill: #808098; -fx-min-width: 120;"/><Label fx:id="emailLabel" style="-fx-text-fill: #e0e0f0;"/></HBox>
+        <HBox spacing="10"><Label text="Role:" style="-fx-text-fill: #808098; -fx-min-width: 120;"/><Label fx:id="roleLabel" style="-fx-text-fill: #e0e0f0;"/></HBox>
+        <HBox spacing="10"><Label text="Subscriber / Park:" style="-fx-text-fill: #808098; -fx-min-width: 120;"/><Label fx:id="subscriberLabel" style="-fx-text-fill: #e0e0f0;"/></HBox>
+    </VBox>
+</VBox>

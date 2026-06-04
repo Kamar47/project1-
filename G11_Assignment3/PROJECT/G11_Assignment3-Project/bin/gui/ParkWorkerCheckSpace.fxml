@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<VBox alignment="TOP_CENTER" spacing="15" xmlns:fx="http://javafx.com/fxml" fx:controller="gui.ParkWorkerCheckSpaceController"
+      style="-fx-padding: 20;">
+    <Label text="Check available space" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #2d6a4f;"/>
+    <VBox spacing="10" style="-fx-background-color: #16213e; -fx-padding: 20; -fx-background-radius: 10; -fx-border-color: #0f3460; -fx-border-radius: 10;" maxWidth="400">
+        <HBox spacing="10" alignment="CENTER_LEFT">
+            <Label text="Park name:" style="-fx-text-fill: #808098; -fx-min-width: 130;"/>
+            <Label fx:id="parkNameLabel" text="--" style="-fx-text-fill: #e0e0f0; -fx-font-weight: bold;"/>
+        </HBox>
+        <HBox spacing="10" alignment="CENTER_LEFT">
+            <Label text="Max capacity:" style="-fx-text-fill: #808098; -fx-min-width: 130;"/>
+            <Label fx:id="maxVisitorsLabel" text="--" style="-fx-text-fill: #e0e0f0;"/>
+        </HBox>
+        <HBox spacing="10" alignment="CENTER_LEFT">
+            <Label text="Current visitors:" style="-fx-text-fill: #808098; -fx-min-width: 130;"/>
+            <Label fx:id="currentVisitorsLabel" text="--" style="-fx-text-fill: #f5a623; -fx-font-size: 16px; -fx-font-weight: bold;"/>
+        </HBox>
+        <HBox spacing="10" alignment="CENTER_LEFT">
+            <Label text="Available spots:" style="-fx-text-fill: #808098; -fx-min-width: 130;"/>
+            <Label fx:id="availableSpotsLabel" text="--" style="-fx-text-fill: #00e676; -fx-font-size: 16px; -fx-font-weight: bold;"/>
+        </HBox>
+        <HBox spacing="10" alignment="CENTER_LEFT">
+            <Label text="Walk-in gap:" style="-fx-text-fill: #808098; -fx-min-width: 130;"/>
+            <Label fx:id="gapLabel" text="--" style="-fx-text-fill: #e0e0f0;"/>
+        </HBox>
+        <HBox spacing="10" alignment="CENTER_LEFT">
+            <Label text="Status:" style="-fx-text-fill: #808098; -fx-min-width: 130;"/>
+            <Label fx:id="statusLabel" text="--" style="-fx-font-weight: bold;"/>
+        </HBox>
+    </VBox>
+    <Button text="Refresh" onAction="#loadParkInfo" style="-fx-background-color: #0f3460; -fx-text-fill: #c0c0d8; -fx-background-radius: 8; -fx-padding: 8 25;"/>
+</VBox>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox alignment="TOP_CENTER" spacing="15" xmlns:fx="http://javafx.com/fxml" fx:controller="gui.TravelerOrdersController"
+      style="-fx-padding: 20;">
+    <Label text="My Orders" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #2d6a4f;"/>
+    <TableView fx:id="ordersTable" prefHeight="300">
+        <columns>
+            <TableColumn fx:id="colId" text="Order ID" prefWidth="60"/>
+            <TableColumn fx:id="colPark" text="Park" prefWidth="120"/>
+            <TableColumn fx:id="colVisitors" text="Visitors" prefWidth="60"/>
+            <TableColumn fx:id="colDate" text="Date" prefWidth="90"/>
+            <TableColumn fx:id="colTime" text="Time" prefWidth="70"/>
+            <TableColumn fx:id="colType" text="Type" prefWidth="110"/>
+            <TableColumn fx:id="colPrice" text="Price" prefWidth="70"/>
+            <TableColumn fx:id="colStatus" text="Status" prefWidth="90"/>
+        </columns>
+    </TableView>
+    <Label fx:id="statusLabel" text="" style="-fx-text-fill: #e94560;"/>
+    <HBox alignment="CENTER" spacing="15">
+        <Button text="Cancel Order" onAction="#handleCancel" style="-fx-background-color: #e94560; -fx-text-fill: white; -fx-background-radius: 8;"/>
+        <Button text="Confirm Order" onAction="#handleConfirm" style="-fx-background-color: #2d6a4f; -fx-text-fill: white; -fx-background-radius: 8;"/>
+        <Button text="Refresh" onAction="#loadOrders" style="-fx-background-color: #0f3460; -fx-text-fill: #c0c0d8; -fx-background-radius: 8;"/>
+    </HBox>
+</VBox>

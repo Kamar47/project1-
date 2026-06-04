@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<VBox alignment="TOP_CENTER" spacing="15" xmlns:fx="http://javafx.com/fxml" fx:controller="gui.OrderAVisitController"
+      style="-fx-padding: 20;">
+    <Label text="Order a Visit" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #2d6a4f;"/>
+    <GridPane hgap="15" vgap="10" alignment="CENTER">
+        <Label text="Park:" style="-fx-text-fill: #c0c0d8;" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+        <ComboBox fx:id="parkCombo" prefWidth="200" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+        <Label text="Date:" style="-fx-text-fill: #c0c0d8;" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+        <DatePicker fx:id="datePicker" prefWidth="200" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+        <Label text="Time:" style="-fx-text-fill: #c0c0d8;" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+        <ComboBox fx:id="timeCombo" prefWidth="200" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+        <Label text="Visitors:" style="-fx-text-fill: #c0c0d8;" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+        <TextField fx:id="visitorsField" promptText="Number of visitors" prefWidth="200" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+        <Label text="Email:" style="-fx-text-fill: #c0c0d8;" GridPane.columnIndex="0" GridPane.rowIndex="4"/>
+        <TextField fx:id="emailField" prefWidth="200" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
+        <Label text="Phone:" style="-fx-text-fill: #c0c0d8;" GridPane.columnIndex="0" GridPane.rowIndex="5"/>
+        <TextField fx:id="phoneField" prefWidth="200" GridPane.columnIndex="1" GridPane.rowIndex="5"/>
+        <Label text="Type:" style="-fx-text-fill: #c0c0d8;" GridPane.columnIndex="0" GridPane.rowIndex="6"/>
+        <ComboBox fx:id="typeCombo" prefWidth="200" GridPane.columnIndex="1" GridPane.rowIndex="6"/>
+        <Label text="Price:" style="-fx-text-fill: #c0c0d8;" GridPane.columnIndex="0" GridPane.rowIndex="7"/>
+        <Label fx:id="priceLabel" text="--" style="-fx-text-fill: #00e676; -fx-font-size: 16px;" GridPane.columnIndex="1" GridPane.rowIndex="7"/>
+    </GridPane>
+    <Label fx:id="statusLabel" text="" style="-fx-text-fill: #e94560;"/>
+    <Button text="Submit Order" onAction="#handleSubmit" style="-fx-background-color: #2d6a4f; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 10 30; -fx-font-size: 14px;"/>
+</VBox>

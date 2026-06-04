@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="gui.TravelerFrameController"
+            style="-fx-background-color: #1a1a2e;" prefWidth="900" prefHeight="650">
+    <left>
+        <VBox spacing="5" style="-fx-background-color: #16213e; -fx-padding: 10; -fx-min-width: 160;" alignment="TOP_CENTER">
+            <Label text="GoNature" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #2d6a4f; -fx-padding: 10 0 20 0;"/>
+            <Button text="Profile" onAction="#showProfile" prefWidth="140" style="-fx-background-color: #0f3460; -fx-text-fill: #c0c0d8; -fx-background-radius: 8;"/>
+            <Button text="Order A Visit" onAction="#showOrderVisit" prefWidth="140" style="-fx-background-color: #0f3460; -fx-text-fill: #c0c0d8; -fx-background-radius: 8;"/>
+            <Button text="View Orders" onAction="#showViewOrders" prefWidth="140" style="-fx-background-color: #0f3460; -fx-text-fill: #c0c0d8; -fx-background-radius: 8;"/>
+            <Button text="Waiting List" onAction="#showWaitingList" prefWidth="140" style="-fx-background-color: #0f3460; -fx-text-fill: #c0c0d8; -fx-background-radius: 8;"/>
+            <VBox style="-fx-padding: 0 0 0 0;" VBox.vgrow="ALWAYS"/>
+            <Button text="Logout" onAction="#handleLogout" prefWidth="140" style="-fx-background-color: #e94560; -fx-text-fill: white; -fx-background-radius: 8;"/>
+        </VBox>
+    </left>
+    <center>
+        <VBox fx:id="contentArea" alignment="TOP_CENTER" style="-fx-padding: 20;">
+            <Label fx:id="welcomeLabel" text="Welcome!" style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #2d6a4f;"/>
+            <Label text="Select an option from the menu" style="-fx-text-fill: #a0a0b8; -fx-font-size: 14px;"/>
+        </VBox>
+    </center>
+</BorderPane>

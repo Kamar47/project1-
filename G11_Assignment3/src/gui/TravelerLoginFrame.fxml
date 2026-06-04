@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<VBox alignment="CENTER" spacing="20" xmlns:fx="http://javafx.com/fxml" fx:controller="gui.TravelerLoginController"
+      style="-fx-background-color: #1a1a2e;" prefWidth="500" prefHeight="400">
+    <padding><Insets top="40" right="40" bottom="40" left="40"/></padding>
+    <Label text="Traveler Login" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2d6a4f;"/>
+    <Label text="Enter your ID number to continue" style="-fx-text-fill: #a0a0b8;"/>
+    <TextField fx:id="idField" promptText="Enter ID Number" maxWidth="300"
+               style="-fx-background-color: #16213e; -fx-text-fill: #e0e0f0; -fx-border-color: #0f3460; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 10; -fx-font-size: 14px;"/>
+    <Label fx:id="errorLabel" text="" style="-fx-text-fill: #e94560;"/>
+    <HBox alignment="CENTER" spacing="15">
+        <Button text="Back" onAction="#handleBack" style="-fx-background-color: #0f3460; -fx-text-fill: #c0c0d8; -fx-background-radius: 8; -fx-padding: 8 25;"/>
+        <Button text="Login" onAction="#handleLogin" style="-fx-background-color: #2d6a4f; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 8 25;"/>
+    </HBox>
+</VBox>

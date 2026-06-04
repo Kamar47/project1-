@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox alignment="CENTER" spacing="20" xmlns:fx="http://javafx.com/fxml"
+      style="-fx-background-color: #1a1a2e; -fx-padding: 40;" prefWidth="800" prefHeight="600">
+    <Label text="Service Worker" style="-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2d6a4f;"/>
+    <Label text="This screen is under construction" style="-fx-text-fill: #a0a0b8; -fx-font-size: 14px;"/>
+</VBox>

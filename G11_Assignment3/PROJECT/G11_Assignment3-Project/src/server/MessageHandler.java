@@ -2,16 +2,9 @@ package server;
 
 import java.io.IOException;
 import java.util.ArrayList;
-
-import DB.DatabaseController;
-import common.ClientServerMessage;
-import common.Command;
-import common.Order;
-import common.Park;
-import common.Pricing;
-import common.Subscriber;
-import common.Traveler;
+import common.*;
 import common.worker.GeneralParkWorker;
+import DB.DatabaseController;
 import ocsf.server.ConnectionToClient;
 
 public class MessageHandler {
@@ -39,7 +32,18 @@ public class MessageHandler {
                         traveler.setEmail(sub.getEmail());
                         traveler.setPhone(sub.getPhone());
                         traveler.setSubscriberId(sub.getSubscriberId());
+                    } else {
+                        // Not a subscriber - look up email from previous orders
+                        java.util.ArrayList<Order> prevOrders = db.getOrdersByTravelerId(travelerId);
+                        if (!prevOrders.isEmpty()) {
+                            Order latest = prevOrders.get(0);
+                            traveler.setEmail(latest.getEmail());
+                            traveler.setPhone(latest.getPhone());
+                        }
                     }
+                    // Check if traveler is a registered guide
+                    boolean isGuide = db.isRegisteredGuide(travelerId);
+                    traveler.setGuide(isGuide);
                     respond(client, Command.SUCCESS, traveler);
                     break;
 

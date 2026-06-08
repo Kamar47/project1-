@@ -1,26 +1,43 @@
 package gui;
 
-import java.net.URL;
-import java.util.ResourceBundle;
-
-import client.ClientMessageHandler;
-import client.ClientUI;
-import common.ClientServerMessage;
-import common.Command;
-import common.Park;
-import common.Traveler;
+import client.*;
+import common.*;
 import common.worker.GeneralParkWorker;
 import javafx.application.Platform;
-import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
+import javafx.fxml.*;
 import javafx.scene.control.Label;
+import java.net.URL;
+import java.util.*;
 
 public class ProfileController implements Initializable, ClientMessageHandler {
     @FXML private Label nameLabel, idLabel, emailLabel, roleLabel, subscriberLabel;
 
+    // Context: "traveler" or "worker" - set before loading this page
+    private static String context = "traveler";
+
+    public static void setContext(String ctx) { context = ctx; }
+
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+        if ("traveler".equals(context)) {
+            showTravelerProfile();
+        } else {
+            showWorkerProfile();
+        }
+    }
+
+    private void showTravelerProfile() {
         Traveler t = TravelerLoginController.getLoggedInTraveler();
+        if (t != null) {
+            nameLabel.setText(t.getFirstName() != null ? t.getFullName() : "Traveler");
+            idLabel.setText(t.getIdNumber());
+            emailLabel.setText(t.getEmail() != null ? t.getEmail() : "--");
+            roleLabel.setText(t.isGuide() ? "Traveler (Guide)" : "Traveler");
+            subscriberLabel.setText(t.getSubscriberId() > 0 ? "Yes (Member #" + t.getSubscriberId() + ")" : "No");
+        }
+    }
+
+    private void showWorkerProfile() {
         GeneralParkWorker w = WorkerLoginController.getLoggedInWorker();
         if (w != null) {
             nameLabel.setText(w.getFullName());
@@ -28,17 +45,10 @@ public class ProfileController implements Initializable, ClientMessageHandler {
             emailLabel.setText(w.getEmail());
             roleLabel.setText(formatRole(w.getRole()));
             subscriberLabel.setText("N/A");
-            // Load park name if worker belongs to a park
             if (w.getParkId() > 0) {
                 ClientUI.client.setHandler(this);
                 ClientUI.client.sendMessage(new ClientServerMessage(Command.GET_PARK_DETAILS, w.getParkId()));
             }
-        } else if (t != null) {
-            nameLabel.setText(t.getFirstName() != null ? t.getFullName() : "Traveler");
-            idLabel.setText(t.getIdNumber());
-            emailLabel.setText(t.getEmail() != null ? t.getEmail() : "--");
-            roleLabel.setText("Traveler");
-            subscriberLabel.setText(t.getSubscriberId() > 0 ? "Yes (Member #" + t.getSubscriberId() + ")" : "No");
         }
     }
 

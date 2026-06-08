@@ -1,18 +1,14 @@
 package gui;
 
-import java.net.URL;
-import java.util.ResourceBundle;
-
-import client.ClientUI;
-import client.NavigationManager;
-import common.ClientServerMessage;
-import common.Command;
+import client.*;
+import common.*;
 import common.worker.GeneralParkWorker;
-import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
+import javafx.fxml.*;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
+import java.net.URL;
+import java.util.ResourceBundle;
 
 public class ParkManagerFrameController implements Initializable {
     @FXML private BorderPane mainBorderPane;
@@ -23,15 +19,30 @@ public class ParkManagerFrameController implements Initializable {
     public void initialize(URL url, ResourceBundle rb) {
         GeneralParkWorker w = WorkerLoginController.getLoggedInWorker();
         if (w != null) workerNameLabel.setText(w.getFullName());
+        // Handle X button close - logout worker
+        javafx.application.Platform.runLater(() -> {
+            if (mainBorderPane.getScene() != null && mainBorderPane.getScene().getWindow() != null) {
+                mainBorderPane.getScene().getWindow().setOnCloseRequest(event -> {
+                    GeneralParkWorker worker = WorkerLoginController.getLoggedInWorker();
+                    if (worker != null) {
+                        ClientUI.client.sendMessage(new ClientServerMessage(Command.WORKER_LOGOUT, worker.getEmployeeId()));
+                        try { Thread.sleep(500); } catch (InterruptedException ex) {}
+                    }
+                });
+            }
+        });
     }
 
-    @FXML private void showProfile() { loadPage("Profile.fxml"); }
+    @FXML private void showProfile() { ProfileController.setContext("worker"); loadPage("Profile.fxml"); }
     @FXML private void showParameters() { loadPage("ParkManagerParameters.fxml"); }
     @FXML private void showCreateReport() { loadPage("ParkManagerCreateReport.fxml"); }
     @FXML private void showPromotions() { loadPage("ParkManagerPromotions.fxml"); }
     @FXML private void handleLogout() {
         GeneralParkWorker w = WorkerLoginController.getLoggedInWorker();
-        if (w != null) ClientUI.client.sendMessage(new ClientServerMessage(Command.WORKER_LOGOUT, w.getEmployeeId()));
+        if (w != null) {
+            ClientUI.client.sendMessage(new ClientServerMessage(Command.WORKER_LOGOUT, w.getEmployeeId()));
+            try { Thread.sleep(500); } catch (InterruptedException ex) {}
+        }
         mainBorderPane.getScene().getWindow().hide();
     }
 

@@ -1,17 +1,9 @@
 package DB;
 
-import java.sql.Connection;
-import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.UUID;
-
-import common.Order;
-import common.Park;
-import common.Subscriber;
+import common.*;
 import common.worker.GeneralParkWorker;
 
 public class DatabaseController {
@@ -136,6 +128,15 @@ public class DatabaseController {
 
     // === SUBSCRIBERS ===
     // === GUIDES ===
+    public boolean isRegisteredGuide(String idNumber) throws SQLException {
+        PreparedStatement ps = conn.prepareStatement("SELECT guide_id FROM guides WHERE id_number = ?");
+        ps.setString(1, idNumber);
+        ResultSet rs = ps.executeQuery();
+        boolean found = rs.next();
+        rs.close(); ps.close();
+        return found;
+    }
+
     public void registerGuide(String idNumber, String firstName, String lastName, String email, String phone) throws SQLException {
         PreparedStatement ps = conn.prepareStatement(
             "INSERT INTO guides (id_number, first_name, last_name, email, phone) VALUES (?,?,?,?,?)");

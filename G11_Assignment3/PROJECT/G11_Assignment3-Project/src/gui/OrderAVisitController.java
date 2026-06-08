@@ -1,29 +1,13 @@
 package gui;
 
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Optional;
-import java.util.ResourceBundle;
-
-import client.ClientMessageHandler;
-import client.ClientUI;
-import common.ClientServerMessage;
-import common.Command;
-import common.Order;
-import common.Park;
-import common.Pricing;
-import common.Traveler;
+import client.*;
+import common.*;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
-import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonBar;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.DatePicker;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import javafx.fxml.*;
+import javafx.scene.control.*;
+import java.net.URL;
+import java.util.*;
 
 public class OrderAVisitController implements Initializable, ClientMessageHandler {
     @FXML private ComboBox<String> parkCombo, timeCombo, typeCombo;
@@ -71,14 +55,27 @@ public class OrderAVisitController implements Initializable, ClientMessageHandle
     private void handleSubmit() {
         System.out.println("[OrderVisit] Submit clicked");
 
-        // Validation
-        if (parkCombo.getValue() == null) { showError("Please select a park."); return; }
-        if (datePicker.getValue() == null) { showError("Please select a date."); return; }
-        if (datePicker.getValue().isBefore(java.time.LocalDate.now())) { showError("Date cannot be in the past."); return; }
-        if (timeCombo.getValue() == null) { showError("Please select a time."); return; }
-        if (visitorsField.getText().trim().isEmpty()) { showError("Please enter number of visitors."); return; }
-        if (emailField.getText().trim().isEmpty()) { showError("Please enter email."); return; }
-        if (typeCombo.getValue() == null) { showError("Please select visit type."); return; }
+        // Check if all fields are empty
+        boolean allEmpty = (parkCombo.getValue() == null && datePicker.getValue() == null 
+            && timeCombo.getValue() == null && visitorsField.getText().trim().isEmpty() 
+            && emailField.getText().trim().isEmpty() && typeCombo.getValue() == null);
+        if (allEmpty) { showError("Please fill in all required fields."); return; }
+
+        // Individual validation
+        StringBuilder errors = new StringBuilder();
+        if (parkCombo.getValue() == null) errors.append("Park, ");
+        if (datePicker.getValue() == null) errors.append("Date, ");
+        else if (datePicker.getValue().isBefore(java.time.LocalDate.now())) errors.append("Date (cannot be in the past), ");
+        if (timeCombo.getValue() == null) errors.append("Time, ");
+        if (visitorsField.getText().trim().isEmpty()) errors.append("Visitors, ");
+        if (emailField.getText().trim().isEmpty()) errors.append("Email, ");
+        if (typeCombo.getValue() == null) errors.append("Visit type, ");
+
+        if (errors.length() > 0) {
+            errors.setLength(errors.length() - 2); // remove last ", "
+            showError("Missing fields: " + errors.toString());
+            return;
+        }
 
         int numVisitors;
         try {
@@ -88,6 +85,25 @@ public class OrderAVisitController implements Initializable, ClientMessageHandle
                 showError("Organized group limited to 15 visitors."); return;
             }
         } catch (NumberFormatException e) { showError("Visitors must be a number."); return; }
+
+        // Bug fix: Check if time already passed when booking for today
+        if (datePicker.getValue().equals(java.time.LocalDate.now())) {
+            String selectedTime = timeCombo.getValue(); // e.g. "08:00"
+            java.time.LocalTime orderTime = java.time.LocalTime.parse(selectedTime);
+            if (orderTime.isBefore(java.time.LocalTime.now())) {
+                showError("Cannot book for a time that already passed today. Please select a later time or a future date.");
+                return;
+            }
+        }
+
+        // Bug fix: Only registered guides can book organized groups
+        if (typeCombo.getValue().equals("organized_group")) {
+            Traveler traveler = TravelerLoginController.getLoggedInTraveler();
+            if (!traveler.isGuide()) {
+                showError("Only registered guides can book organized groups.");
+                return;
+            }
+        }
 
         if (parks == null) { showError("Parks not loaded yet. Please wait."); return; }
 

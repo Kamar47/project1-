@@ -1,8 +1,5 @@
 package gui;
 
-import java.net.URL;
-import java.util.ResourceBundle;
-
 import client.NavigationManager;
 import common.Traveler;
 import javafx.fxml.FXML;
@@ -10,6 +7,8 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
+import java.net.URL;
+import java.util.ResourceBundle;
 
 public class TravelerFrameController implements Initializable {
     @FXML private BorderPane mainBorderPane;
@@ -26,7 +25,7 @@ public class TravelerFrameController implements Initializable {
         }
     }
 
-    @FXML private void showProfile() { loadPage("Profile.fxml"); }
+    @FXML private void showProfile() { ProfileController.setContext("traveler"); loadPage("Profile.fxml"); }
     @FXML private void showOrderVisit() { loadPage("OrderVisit.fxml"); }
     @FXML private void showViewOrders() { loadPage("TravelerOrdersFrame.fxml"); }
     @FXML private void showWaitingList() { loadPage("TravelerWaitingList.fxml"); }

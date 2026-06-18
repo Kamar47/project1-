@@ -1,21 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<VBox alignment="TOP_CENTER" spacing="15" xmlns:fx="http://javafx.com/fxml" fx:controller="gui.DeptManagerParkParamsController" style="-fx-padding: 20;">
-    <Label text="Park parameters" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #2d6a4f;"/>
-    <HBox spacing="10" alignment="CENTER">
-        <Label text="Select park:" style="-fx-text-fill: #c0c0d8;"/>
-        <ComboBox fx:id="parkCombo" prefWidth="200"/>
-        <Button text="Get park parameters" onAction="#handleGetParams" style="-fx-background-color: #2d6a4f; -fx-text-fill: white; -fx-background-radius: 8;"/>
-    </HBox>
-    <VBox fx:id="paramsBox" spacing="8" visible="false" managed="false"
-          style="-fx-background-color: #16213e; -fx-padding: 20; -fx-background-radius: 10; -fx-border-color: #0f3460; -fx-border-radius: 10;" maxWidth="450">
-        <HBox spacing="10"><Label text="Park name:" style="-fx-text-fill: #808098; -fx-min-width: 160;"/><Label fx:id="nameLabel" style="-fx-text-fill: #e0e0f0; -fx-font-weight: bold;"/></HBox>
-        <HBox spacing="10"><Label text="Current visitors:" style="-fx-text-fill: #808098; -fx-min-width: 160;"/><Label fx:id="currentLabel" style="-fx-text-fill: #f5a623; -fx-font-weight: bold;"/></HBox>
-        <HBox spacing="10"><Label text="Max visitors:" style="-fx-text-fill: #808098; -fx-min-width: 160;"/><Label fx:id="maxLabel" style="-fx-text-fill: #e0e0f0;"/></HBox>
-        <HBox spacing="10"><Label text="Walk-in gap:" style="-fx-text-fill: #808098; -fx-min-width: 160;"/><Label fx:id="gapLabel" style="-fx-text-fill: #e0e0f0;"/></HBox>
-        <HBox spacing="10"><Label text="Capacity:" style="-fx-text-fill: #808098; -fx-min-width: 160;"/><Label fx:id="capacityLabel" style="-fx-text-fill: #e0e0f0;"/></HBox>
-        <HBox spacing="10"><Label text="Stay time:" style="-fx-text-fill: #808098; -fx-min-width: 160;"/><Label fx:id="stayLabel" style="-fx-text-fill: #e0e0f0;"/></HBox>
+<?import javafx.scene.text.*?>
+<VBox alignment="TOP_CENTER" spacing="18" xmlns:fx="http://javafx.com/fxml" fx:controller="gui.DeptManagerParkParamsController" style="-fx-padding: 25; -fx-background-color: #12121f;">
+    <Label text="Park Parameters" style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #34d399;"/>
+    <Label text="View the current settings of any park" style="-fx-text-fill: #94a3b8; -fx-font-size: 13px;"/>
+
+    <VBox spacing="12" maxWidth="420" style="-fx-background-color: #1c1c2e; -fx-padding: 22; -fx-background-radius: 14;">
+        <VBox spacing="6">
+            <TextFlow>
+                <Text text="Select Park" style="-fx-fill: #94a3b8; -fx-font-size: 12px;"/>
+                <Text text=" *" style="-fx-fill: #f87171; -fx-font-size: 12px; -fx-font-weight: bold;"/>
+            </TextFlow>
+            <ComboBox fx:id="parkCombo" maxWidth="Infinity"/>
+        </VBox>
+        <Button text="Get Park Parameters" onAction="#handleGetParams" maxWidth="Infinity"
+                style="-fx-background-color: #10b981; -fx-text-fill: white; -fx-background-radius: 10; -fx-padding: 10 0; -fx-font-weight: bold; -fx-cursor: hand;"/>
     </VBox>
-    <Label fx:id="statusLabel" text=""/>
+
+    <VBox fx:id="paramsBox" spacing="14" visible="false" managed="false" maxWidth="450"
+          style="-fx-background-color: #1c1c2e; -fx-padding: 24; -fx-background-radius: 14;">
+        <Label text="Park Details" style="-fx-text-fill: #34d399; -fx-font-size: 15px; -fx-font-weight: bold;"/>
+        <HBox spacing="10"><Label text="Park Name" style="-fx-text-fill: #94a3b8; -fx-min-width: 160; -fx-font-size: 13px;"/><Label fx:id="nameLabel" style="-fx-text-fill: #f1f5f9; -fx-font-weight: bold; -fx-font-size: 14px;"/></HBox>
+        <Separator style="-fx-opacity: 0.3;"/>
+        <HBox spacing="10"><Label text="Current Visitors" style="-fx-text-fill: #94a3b8; -fx-min-width: 160; -fx-font-size: 13px;"/><Label fx:id="currentLabel" style="-fx-text-fill: #fbbf24; -fx-font-weight: bold; -fx-font-size: 16px;"/></HBox>
+        <Separator style="-fx-opacity: 0.3;"/>
+        <HBox spacing="10"><Label text="Max Visitors" style="-fx-text-fill: #94a3b8; -fx-min-width: 160; -fx-font-size: 13px;"/><Label fx:id="maxLabel" style="-fx-text-fill: #f1f5f9; -fx-font-size: 14px;"/></HBox>
+        <Separator style="-fx-opacity: 0.3;"/>
+        <HBox spacing="10"><Label text="Walk-in Gap" style="-fx-text-fill: #94a3b8; -fx-min-width: 160; -fx-font-size: 13px;"/><Label fx:id="gapLabel" style="-fx-text-fill: #f1f5f9; -fx-font-size: 14px;"/></HBox>
+        <Separator style="-fx-opacity: 0.3;"/>
+        <HBox spacing="10"><Label text="Capacity" style="-fx-text-fill: #94a3b8; -fx-min-width: 160; -fx-font-size: 13px;"/><Label fx:id="capacityLabel" style="-fx-text-fill: #f1f5f9; -fx-font-size: 14px;"/></HBox>
+        <Separator style="-fx-opacity: 0.3;"/>
+        <HBox spacing="10"><Label text="Stay Time" style="-fx-text-fill: #94a3b8; -fx-min-width: 160; -fx-font-size: 13px;"/><Label fx:id="stayLabel" style="-fx-text-fill: #f1f5f9; -fx-font-size: 14px;"/></HBox>
+    </VBox>
+
+    <Label fx:id="statusLabel" text="" style="-fx-font-size: 12px;"/>
 </VBox>

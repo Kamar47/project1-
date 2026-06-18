@@ -1,29 +1,61 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<VBox alignment="TOP_CENTER" spacing="15" xmlns:fx="http://javafx.com/fxml" fx:controller="gui.ParkManagerPromotionsController" style="-fx-padding: 20;">
-    <Label text="Promotions" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #2d6a4f;"/>
-    <Label text="Create a new promotion (requires department manager approval)" style="-fx-text-fill: #a0a0b8; -fx-font-size: 11px;"/>
-    <VBox spacing="10" style="-fx-background-color: #16213e; -fx-padding: 20; -fx-background-radius: 10; -fx-border-color: #0f3460; -fx-border-radius: 10;" maxWidth="450">
-        <HBox spacing="10" alignment="CENTER_LEFT">
-            <Label text="Discount (%):" style="-fx-text-fill: #c0c0d8; -fx-min-width: 120;"/>
-            <TextField fx:id="discountField" prefWidth="100" promptText="e.g. 20"
-                       style="-fx-background-color: #0d1b2a; -fx-text-fill: #e0e0f0; -fx-border-color: #0f3460; -fx-border-radius: 5; -fx-background-radius: 5;"/>
-        </HBox>
-        <HBox spacing="10" alignment="CENTER_LEFT">
-            <Label text="Start date:" style="-fx-text-fill: #c0c0d8; -fx-min-width: 120;"/>
-            <DatePicker fx:id="startDatePicker" prefWidth="180"/>
-        </HBox>
-        <HBox spacing="10" alignment="CENTER_LEFT">
-            <Label text="End date:" style="-fx-text-fill: #c0c0d8; -fx-min-width: 120;"/>
-            <DatePicker fx:id="endDatePicker" prefWidth="180"/>
-        </HBox>
-        <HBox spacing="10" alignment="CENTER_LEFT">
-            <Label text="Description:" style="-fx-text-fill: #c0c0d8; -fx-min-width: 120;"/>
-            <TextField fx:id="descriptionField" prefWidth="250" promptText="Promotion description"
-                       style="-fx-background-color: #0d1b2a; -fx-text-fill: #e0e0f0; -fx-border-color: #0f3460; -fx-border-radius: 5; -fx-background-radius: 5;"/>
-        </HBox>
+<?import javafx.scene.text.*?>
+<ScrollPane fitToWidth="true" xmlns:fx="http://javafx.com/fxml" fx:controller="gui.ParkManagerPromotionsController" style="-fx-background: #12121f; -fx-background-color: #12121f;">
+<VBox alignment="TOP_CENTER" spacing="18" style="-fx-padding: 25; -fx-background-color: #12121f;">
+    <Label text="Promotions" style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #34d399;"/>
+    <Label fx:id="statusLabel" text="" style="-fx-font-size: 12px;"/>
+
+    <VBox spacing="16" maxWidth="420" style="-fx-background-color: #1c1c2e; -fx-padding: 28; -fx-background-radius: 14;">
+        <Label text="Create New Promotion" style="-fx-text-fill: #34d399; -fx-font-size: 16px; -fx-font-weight: bold;"/>
+
+        <VBox spacing="6">
+            <TextFlow>
+                <Text text="Discount Percentage" style="-fx-fill: #94a3b8; -fx-font-size: 12px;"/>
+                <Text text=" *" style="-fx-fill: #f87171; -fx-font-size: 12px; -fx-font-weight: bold;"/>
+            </TextFlow>
+            <TextField fx:id="discountField" promptText="e.g. 20" maxWidth="Infinity"/>
+        </VBox>
+
+        <VBox spacing="6">
+            <TextFlow>
+                <Text text="Start Date" style="-fx-fill: #94a3b8; -fx-font-size: 12px;"/>
+                <Text text=" *" style="-fx-fill: #f87171; -fx-font-size: 12px; -fx-font-weight: bold;"/>
+            </TextFlow>
+            <DatePicker fx:id="startDatePicker" maxWidth="Infinity"/>
+        </VBox>
+
+        <VBox spacing="6">
+            <TextFlow>
+                <Text text="End Date" style="-fx-fill: #94a3b8; -fx-font-size: 12px;"/>
+                <Text text=" *" style="-fx-fill: #f87171; -fx-font-size: 12px; -fx-font-weight: bold;"/>
+            </TextFlow>
+            <DatePicker fx:id="endDatePicker" maxWidth="Infinity"/>
+        </VBox>
+
+        <VBox spacing="6">
+            <Label text="Description (optional)" style="-fx-text-fill: #94a3b8; -fx-font-size: 12px;"/>
+            <TextField fx:id="descField" promptText="e.g. Summer special offer" maxWidth="Infinity"/>
+        </VBox>
+
+        <Button text="Submit Promotion Request" onAction="#handleSubmit" maxWidth="Infinity"
+                style="-fx-background-color: #10b981; -fx-text-fill: white; -fx-background-radius: 10; -fx-padding: 11 0; -fx-font-weight: bold; -fx-font-size: 13px;"/>
+        <Label text="Requires Department Manager approval" style="-fx-text-fill: #64748b; -fx-font-size: 11px;"/>
     </VBox>
-    <Label fx:id="statusLabel" text=""/>
-    <Button text="Submit promotion" onAction="#handleSubmit" style="-fx-background-color: #2d6a4f; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 8 25;"/>
+
+    <Label text="My Promotion Requests" style="-fx-text-fill: #34d399; -fx-font-size: 16px; -fx-font-weight: bold;"/>
+    <TableView fx:id="promotionsTable" prefHeight="220" maxWidth="760">
+        <columns>
+            <TableColumn fx:id="colId" text="#" prefWidth="40"/>
+            <TableColumn fx:id="colDiscount" text="Discount" prefWidth="85"/>
+            <TableColumn fx:id="colStart" text="Start" prefWidth="105"/>
+            <TableColumn fx:id="colEnd" text="End" prefWidth="105"/>
+            <TableColumn fx:id="colDesc" text="Description" prefWidth="185"/>
+            <TableColumn fx:id="colStatus" text="Status" prefWidth="115"/>
+        </columns>
+    </TableView>
+    <Button text="Refresh" onAction="#handleRefresh"
+            style="-fx-background-color: #252538; -fx-text-fill: #34d399; -fx-border-color: #34d399; -fx-border-radius: 10; -fx-background-radius: 10; -fx-padding: 8 28;"/>
 </VBox>
+</ScrollPane>

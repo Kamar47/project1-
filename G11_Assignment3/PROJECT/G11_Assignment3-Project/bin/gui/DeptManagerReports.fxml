@@ -1,40 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<VBox alignment="TOP_CENTER" spacing="15" xmlns:fx="http://javafx.com/fxml" fx:controller="gui.DeptManagerReportsController" style="-fx-padding: 20;">
-    <Label text="Parks reports" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #2d6a4f;"/>
-    <HBox spacing="10" alignment="CENTER">
-        <VBox spacing="5">
-            <Label text="Report type:" style="-fx-text-fill: #c0c0d8;"/>
+<ScrollPane fitToWidth="true" xmlns:fx="http://javafx.com/fxml" fx:controller="gui.DeptManagerReportsController" style="-fx-background: #12121f; -fx-background-color: #12121f;">
+<VBox alignment="TOP_CENTER" spacing="18" style="-fx-padding: 25; -fx-background-color: #12121f;">
+    <Label text="Parks Reports" style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #34d399;"/>
+    <Label text="Generate visit and cancellation reports for any park" style="-fx-text-fill: #94a3b8; -fx-font-size: 13px;"/>
+
+    <HBox spacing="15" alignment="CENTER" style="-fx-background-color: #1c1c2e; -fx-padding: 22; -fx-background-radius: 14;">
+        <VBox spacing="6">
+            <Label text="Report Type" style="-fx-text-fill: #94a3b8; -fx-font-size: 12px;"/>
             <ComboBox fx:id="reportTypeCombo" prefWidth="200"/>
         </VBox>
-        <VBox spacing="5">
-            <Label text="Park:" style="-fx-text-fill: #c0c0d8;"/>
+        <VBox spacing="6">
+            <Label text="Park" style="-fx-text-fill: #94a3b8; -fx-font-size: 12px;"/>
             <ComboBox fx:id="parkCombo" prefWidth="180"/>
         </VBox>
-        <VBox spacing="5">
-            <Label text="Month:" style="-fx-text-fill: #c0c0d8;"/>
+        <VBox spacing="6">
+            <Label text="Month" style="-fx-text-fill: #94a3b8; -fx-font-size: 12px;"/>
             <ComboBox fx:id="monthCombo" prefWidth="80"/>
         </VBox>
+        <VBox spacing="6">
+            <Label text="Year" style="-fx-text-fill: #94a3b8; -fx-font-size: 12px;"/>
+            <ComboBox fx:id="yearCombo" prefWidth="80"/>
+        </VBox>
     </HBox>
+
     <HBox spacing="10" alignment="CENTER">
-        <Button text="Generate report" onAction="#handleGenerate" style="-fx-background-color: #2d6a4f; -fx-text-fill: white; -fx-background-radius: 8;"/>
-        <Button text="View existing reports" onAction="#handleViewExisting" style="-fx-background-color: #0f3460; -fx-text-fill: #c0c0d8; -fx-background-radius: 8;"/>
+        <Button text="Generate Report" onAction="#handleGenerate"
+                style="-fx-background-color: #10b981; -fx-text-fill: white; -fx-background-radius: 10; -fx-padding: 10 28; -fx-font-size: 13px; -fx-font-weight: bold; -fx-cursor: hand;"/>
+        <Button text="View Saved Reports" onAction="#handleViewExisting"
+                style="-fx-background-color: #252538; -fx-text-fill: #34d399; -fx-border-color: #34d399; -fx-border-radius: 10; -fx-background-radius: 10; -fx-padding: 10 28; -fx-font-size: 13px; -fx-cursor: hand;"/>
     </HBox>
-    <Label fx:id="statusLabel" text=""/>
-    <TableView fx:id="reportsTable" prefHeight="200" visible="false" managed="false">
-        <columns>
-            <TableColumn fx:id="colReportId" text="ID" prefWidth="50"/>
-            <TableColumn fx:id="colType" text="Type" prefWidth="120"/>
-            <TableColumn fx:id="colPark" text="Park" prefWidth="100"/>
-            <TableColumn fx:id="colMonth" text="Month" prefWidth="60"/>
-            <TableColumn fx:id="colComment" text="Data" prefWidth="250"/>
-        </columns>
-    </TableView>
-    <VBox fx:id="reportResultBox" visible="false" managed="false"
-          style="-fx-background-color: #16213e; -fx-padding: 15; -fx-background-radius: 10; -fx-border-color: #0f3460; -fx-border-radius: 10;">
-        <Label fx:id="reportTitle" style="-fx-text-fill: #2d6a4f; -fx-font-size: 14px; -fx-font-weight: bold;"/>
-        <TextArea fx:id="reportData" prefRowCount="10" editable="false"
-                  style="-fx-control-inner-background: #0d1b2a; -fx-text-fill: #e0e0f0; -fx-font-family: monospace;"/>
-    </VBox>
+    <Label fx:id="statusLabel" text="" style="-fx-font-size: 12px;"/>
+
+    <VBox fx:id="reportBox" visible="false" managed="false" spacing="15"/>
 </VBox>
+</ScrollPane>

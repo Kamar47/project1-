@@ -1,35 +1,43 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<VBox alignment="TOP_CENTER" spacing="15" xmlns:fx="http://javafx.com/fxml" fx:controller="gui.ParkManagerParametersController" style="-fx-padding: 20;">
-    <Label text="Park parameters" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #2d6a4f;"/>
-    <VBox spacing="10" style="-fx-background-color: #16213e; -fx-padding: 20; -fx-background-radius: 10; -fx-border-color: #0f3460; -fx-border-radius: 10;" maxWidth="500">
-        <HBox spacing="10" alignment="CENTER_LEFT">
-            <Label text="Park name:" style="-fx-text-fill: #808098; -fx-min-width: 160;"/>
-            <Label fx:id="parkNameLabel" text="--" style="-fx-text-fill: #e0e0f0; -fx-font-weight: bold;"/>
-        </HBox>
-        <HBox spacing="10" alignment="CENTER_LEFT">
-            <Label text="Current visitors:" style="-fx-text-fill: #808098; -fx-min-width: 160;"/>
-            <Label fx:id="currentVisitorsLabel" text="--" style="-fx-text-fill: #f5a623; -fx-font-weight: bold;"/>
-        </HBox>
-        <Separator/>
-        <Label text="Request parameter change (requires department manager approval)" style="-fx-text-fill: #a0a0b8; -fx-font-size: 11px;"/>
-        <HBox spacing="10" alignment="CENTER_LEFT">
-            <Label text="Max visitors:" style="-fx-text-fill: #c0c0d8; -fx-min-width: 160;"/>
-            <TextField fx:id="maxVisitorsField" prefWidth="100" style="-fx-background-color: #0d1b2a; -fx-text-fill: #e0e0f0; -fx-border-color: #0f3460; -fx-border-radius: 5; -fx-background-radius: 5;"/>
-        </HBox>
-        <HBox spacing="10" alignment="CENTER_LEFT">
-            <Label text="Walk-in gap:" style="-fx-text-fill: #c0c0d8; -fx-min-width: 160;"/>
-            <TextField fx:id="gapField" prefWidth="100" style="-fx-background-color: #0d1b2a; -fx-text-fill: #e0e0f0; -fx-border-color: #0f3460; -fx-border-radius: 5; -fx-background-radius: 5;"/>
-        </HBox>
-        <HBox spacing="10" alignment="CENTER_LEFT">
-            <Label text="Estimated visit (hours):" style="-fx-text-fill: #c0c0d8; -fx-min-width: 160;"/>
-            <TextField fx:id="durationField" prefWidth="100" style="-fx-background-color: #0d1b2a; -fx-text-fill: #e0e0f0; -fx-border-color: #0f3460; -fx-border-radius: 5; -fx-background-radius: 5;"/>
-        </HBox>
-    </VBox>
+<ScrollPane fitToWidth="true" xmlns:fx="http://javafx.com/fxml" fx:controller="gui.ParkManagerParametersController" style="-fx-background: #12121f; -fx-background-color: #12121f;">
+<VBox alignment="TOP_CENTER" spacing="20" style="-fx-padding: 25; -fx-background-color: #12121f;">
+    <Label text="Park Parameters" style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #34d399;"/>
+    <Label fx:id="parkNameLabel" text="" style="-fx-font-size: 15px; -fx-text-fill: #f1f5f9;"/>
+    <Label text="Enter a new value only for the parameters you want to change" style="-fx-text-fill: #94a3b8; -fx-font-size: 12px;"/>
     <Label fx:id="statusLabel" text=""/>
-    <HBox spacing="10" alignment="CENTER">
-        <Button text="Refresh" onAction="#loadParkInfo" style="-fx-background-color: #0f3460; -fx-text-fill: #c0c0d8; -fx-background-radius: 8; -fx-padding: 8 20;"/>
-        <Button text="Submit change request" onAction="#handleSubmitChange" style="-fx-background-color: #2d6a4f; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 8 20;"/>
-    </HBox>
+
+    <GridPane hgap="20" vgap="18" alignment="CENTER" style="-fx-background-color: #1c1c2e; -fx-padding: 25; -fx-background-radius: 12;">
+        <Label text="Parameter" GridPane.columnIndex="0" GridPane.rowIndex="0" style="-fx-text-fill: #34d399; -fx-font-weight: bold; -fx-font-size: 14px;"/>
+        <Label text="Current Value" GridPane.columnIndex="1" GridPane.rowIndex="0" style="-fx-text-fill: #34d399; -fx-font-weight: bold; -fx-font-size: 14px;"/>
+        <Label text="New Value" GridPane.columnIndex="2" GridPane.rowIndex="0" style="-fx-text-fill: #34d399; -fx-font-weight: bold; -fx-font-size: 14px;"/>
+
+        <Label text="Max Visitors:" GridPane.columnIndex="0" GridPane.rowIndex="1" style="-fx-text-fill: #f1f5f9; -fx-font-size: 13px;"/>
+        <Label fx:id="currentMaxVisitors" text="--" GridPane.columnIndex="1" GridPane.rowIndex="1" style="-fx-text-fill: #fbbf24; -fx-font-size: 14px; -fx-font-weight: bold;"/>
+        <TextField fx:id="newMaxVisitors" promptText="Enter new value" prefWidth="150" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+
+        <Label text="Walk-in Gap:" GridPane.columnIndex="0" GridPane.rowIndex="2" style="-fx-text-fill: #f1f5f9; -fx-font-size: 13px;"/>
+        <Label fx:id="currentGap" text="--" GridPane.columnIndex="1" GridPane.rowIndex="2" style="-fx-text-fill: #fbbf24; -fx-font-size: 14px; -fx-font-weight: bold;"/>
+        <TextField fx:id="newGap" promptText="Enter new value" prefWidth="150" GridPane.columnIndex="2" GridPane.rowIndex="2"/>
+
+        <Label text="Stay Time (hours):" GridPane.columnIndex="0" GridPane.rowIndex="3" style="-fx-text-fill: #f1f5f9; -fx-font-size: 13px;"/>
+        <Label fx:id="currentStayTime" text="--" GridPane.columnIndex="1" GridPane.rowIndex="3" style="-fx-text-fill: #fbbf24; -fx-font-size: 14px; -fx-font-weight: bold;"/>
+        <TextField fx:id="newStayTime" promptText="Enter new value" prefWidth="150" GridPane.columnIndex="2" GridPane.rowIndex="3"/>
+    </GridPane>
+
+    <Button text="Submit Change Request" onAction="#handleSubmit"
+            style="-fx-background-color: #10b981; -fx-text-fill: white; -fx-background-radius: 10; -fx-padding: 10 30; -fx-font-size: 13px; -fx-font-weight: bold;"/>
+
+    <Label text="My Pending Requests" style="-fx-text-fill: #34d399; -fx-font-size: 15px; -fx-font-weight: bold;"/>
+    <TableView fx:id="requestsTable" prefHeight="180" maxWidth="700">
+        <columns>
+            <TableColumn fx:id="colParam" text="Parameter" prefWidth="160"/>
+            <TableColumn fx:id="colOld" text="Current" prefWidth="100"/>
+            <TableColumn fx:id="colNew" text="Requested" prefWidth="100"/>
+            <TableColumn fx:id="colStatus" text="Status" prefWidth="120"/>
+            <TableColumn fx:id="colDate" text="Date" prefWidth="160"/>
+        </columns>
+    </TableView>
 </VBox>
+</ScrollPane>

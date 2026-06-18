@@ -1,22 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<VBox alignment="TOP_CENTER" spacing="15" xmlns:fx="http://javafx.com/fxml" fx:controller="gui.TravelerWaitingListController"
-      style="-fx-padding: 20;">
-    <Label text="My waiting list" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #2d6a4f;"/>
-    <TableView fx:id="waitlistTable" prefHeight="250">
+<VBox alignment="TOP_CENTER" spacing="18" xmlns:fx="http://javafx.com/fxml" fx:controller="gui.TravelerWaitingListController"
+      style="-fx-padding: 25; -fx-background-color: #12121f;">
+    <Label text="My Waiting List" style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #34d399;"/>
+    <Label text="Spots you're waiting for. You'll be notified when one opens up." style="-fx-text-fill: #94a3b8; -fx-font-size: 13px;"/>
+
+    <TableView fx:id="waitlistTable" prefHeight="280" maxWidth="700">
         <columns>
-            <TableColumn fx:id="colId" text="Order ID" prefWidth="70"/>
-            <TableColumn fx:id="colPark" text="Park" prefWidth="120"/>
-            <TableColumn fx:id="colDate" text="Requested Date" prefWidth="110"/>
+            <TableColumn fx:id="colId" text="Order ID" prefWidth="80"/>
+            <TableColumn fx:id="colPark" text="Park" prefWidth="130"/>
+            <TableColumn fx:id="colDate" text="Requested Date" prefWidth="120"/>
             <TableColumn fx:id="colTime" text="Time" prefWidth="80"/>
-            <TableColumn fx:id="colVisitors" text="Visitors" prefWidth="70"/>
-            <TableColumn fx:id="colStatus" text="Status" prefWidth="90"/>
+            <TableColumn fx:id="colVisitors" text="Visitors" prefWidth="75"/>
+            <TableColumn fx:id="colStatus" text="Status" prefWidth="100"/>
         </columns>
     </TableView>
-    <Label fx:id="statusLabel" text="" style="-fx-text-fill: #a0a0b8;"/>
-    <HBox spacing="10" alignment="CENTER">
-        <Button text="Remove from list" onAction="#handleRemove" style="-fx-background-color: #e94560; -fx-text-fill: white; -fx-background-radius: 8;"/>
-        <Button text="Refresh" onAction="#loadWaitlist" style="-fx-background-color: #0f3460; -fx-text-fill: #c0c0d8; -fx-background-radius: 8;"/>
+
+    <Label fx:id="statusLabel" text="" style="-fx-text-fill: #94a3b8; -fx-font-size: 12px;"/>
+
+    <HBox spacing="12" alignment="CENTER">
+        <Button text="Remove from List" onAction="#handleRemove"
+                style="-fx-background-color: #ef4444; -fx-text-fill: white; -fx-background-radius: 10; -fx-padding: 10 26; -fx-font-weight: bold; -fx-cursor: hand;"/>
+        <Button text="Refresh" onAction="#loadWaitlist"
+                style="-fx-background-color: #252538; -fx-text-fill: #34d399; -fx-border-color: #34d399; -fx-border-radius: 10; -fx-background-radius: 10; -fx-padding: 10 26; -fx-cursor: hand;"/>
     </HBox>
 </VBox>

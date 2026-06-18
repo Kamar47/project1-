@@ -234,11 +234,19 @@ public class MessageHandler {
                     db.approvePromotion((int)apData.get(0), (int)apData.get(1));
                     respond(client, Command.SUCCESS, "Promotion approved.");
                     break;
+                case GET_WALKINS_TODAY:
+                    int wtParkId = (int) msg.getData();
+                    respond(client, Command.DATA_RESPONSE, db.getWalkinsToday(wtParkId));
+                    break;
 
                 case REJECT_PROMOTION:
                     ArrayList<Object> rpData = msg.getDataAsArrayList();
                     db.rejectPromotion((int)rpData.get(0), (int)rpData.get(1));
                     respond(client, Command.SUCCESS, "Promotion rejected.");
+                    break;
+                case GET_MY_PROMOTIONS:
+                    int myPromoParkId = (int) msg.getData();
+                    respond(client, Command.DATA_RESPONSE, db.getPromotionsByPark(myPromoParkId));
                     break;
 
                 case SAVE_REPORT:
@@ -268,6 +276,17 @@ public class MessageHandler {
                     String reportResult = db.generateReport(msg.getCommand().name(), rParkId, rMonth, rYear, rEmpId);
                     server.log("[Report] Result: " + reportResult);
                     respond(client, Command.DATA_RESPONSE, reportResult);
+                    break;
+                case GET_ALL_REPORTS:
+                    int reportsParkId = (int) msg.getData();
+                    respond(client, Command.DATA_RESPONSE, db.getReportsByPark(reportsParkId));
+                    break;
+                    
+                    
+                    
+                case GET_MY_PARAMETER_REQUESTS:
+                    int reqParkId = (int) msg.getData();
+                    respond(client, Command.DATA_RESPONSE, db.getParameterRequestsByPark(reqParkId));
                     break;
 
                 default:

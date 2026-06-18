@@ -91,6 +91,40 @@ public class DatabaseController {
         int rows = ps.executeUpdate(); ps.close();
         return rows > 0;
     }
+    
+    public ArrayList<String> getAllReports() throws SQLException {
+        ArrayList<String> reports = new ArrayList<>();
+        PreparedStatement ps = conn.prepareStatement(
+            "SELECT r.report_id, r.report_type, p.park_name, r.report_month, r.report_year, r.report_data, r.created_at " +
+            "FROM reports r JOIN parks p ON r.park_id = p.park_id ORDER BY r.created_at DESC");
+        ResultSet rs = ps.executeQuery();
+        while (rs.next()) {
+            reports.add("[#" + rs.getInt("report_id") + "] " + rs.getString("report_type") + " - " +
+                rs.getString("park_name") + " | Month " + rs.getInt("report_month") + "/" + rs.getInt("report_year") +
+                " | Created: " + rs.getTimestamp("created_at") + "\n" + rs.getString("report_data"));
+        }
+        rs.close(); ps.close();
+        return reports;
+    }
+    
+    public ArrayList<ArrayList<String>> getParameterRequestsByPark(int parkId) throws SQLException {
+        ArrayList<ArrayList<String>> requests = new ArrayList<>();
+        PreparedStatement ps = conn.prepareStatement(
+            "SELECT parameter_name, old_value, new_value, status, created_at FROM parameter_requests WHERE park_id = ? ORDER BY created_at DESC");
+        ps.setInt(1, parkId);
+        ResultSet rs = ps.executeQuery();
+        while (rs.next()) {
+            ArrayList<String> row = new ArrayList<>();
+            row.add(rs.getString("parameter_name"));
+            row.add(String.valueOf(rs.getDouble("old_value")));
+            row.add(String.valueOf(rs.getDouble("new_value")));
+            row.add(rs.getString("status"));
+            row.add(rs.getTimestamp("created_at").toString());
+            requests.add(row);
+        }
+        rs.close(); ps.close();
+        return requests;
+    }
 
     public int checkAvailability(int parkId, String date, String time) throws SQLException {
         Park park = getParkById(parkId);
@@ -135,6 +169,49 @@ public class DatabaseController {
         boolean found = rs.next();
         rs.close(); ps.close();
         return found;
+    }
+    public ArrayList<ArrayList<String>> getPromotionsByPark(int parkId) throws SQLException {
+        ArrayList<ArrayList<String>> promos = new ArrayList<>();
+        PreparedStatement ps = conn.prepareStatement(
+            "SELECT promo_id, discount_percentage, start_date, end_date, description, status " +
+            "FROM promotions WHERE park_id = ? ORDER BY created_at DESC");
+        ps.setInt(1, parkId);
+        ResultSet rs = ps.executeQuery();
+        while (rs.next()) {
+            ArrayList<String> row = new ArrayList<>();
+            row.add(String.valueOf(rs.getInt("promo_id")));
+            row.add(String.valueOf(rs.getDouble("discount_percentage")));
+            row.add(rs.getDate("start_date").toString());
+            row.add(rs.getDate("end_date").toString());
+            row.add(rs.getString("description") != null ? rs.getString("description") : "");
+            row.add(rs.getString("status"));
+            promos.add(row);
+        }
+        rs.close(); ps.close();
+        return promos;
+    }
+    
+    
+    
+    public ArrayList<ArrayList<String>> getReportsByPark(int parkId) throws SQLException {
+        ArrayList<ArrayList<String>> reports = new ArrayList<>();
+        PreparedStatement ps = conn.prepareStatement(
+            "SELECT report_id, report_type, report_month, report_year, created_at, report_data " +
+            "FROM reports WHERE park_id = ? ORDER BY created_at DESC");
+        ps.setInt(1, parkId);
+        ResultSet rs = ps.executeQuery();
+        while (rs.next()) {
+            ArrayList<String> row = new ArrayList<>();
+            row.add(String.valueOf(rs.getInt("report_id")));
+            row.add(rs.getString("report_type"));
+            row.add(String.valueOf(rs.getInt("report_month")));
+            row.add(String.valueOf(rs.getInt("report_year")));
+            row.add(rs.getTimestamp("created_at").toString());
+            row.add(rs.getString("report_data") != null ? rs.getString("report_data") : "");
+            reports.add(row);
+        }
+        rs.close(); ps.close();
+        return reports;
     }
 
     public void registerGuide(String idNumber, String firstName, String lastName, String email, String phone) throws SQLException {
@@ -187,13 +264,22 @@ public class DatabaseController {
     }
 
     public void recordExit(int parkId, String visitorId, int numVisitors) throws SQLException {
-        PreparedStatement ps = conn.prepareStatement(
-            "UPDATE park_visits SET exit_time = NOW() WHERE park_id = ? AND visitor_id = ? AND exit_time IS NULL");
-        ps.setInt(1, parkId); ps.setString(2, visitorId);
-        ps.executeUpdate(); ps.close();
-        updateParkVisitors(parkId, -numVisitors);
-    }
+        // Record exit time
+        PreparedStatement ps1 = conn.prepareStatement(
+            "UPDATE park_visits SET exit_time = NOW() WHERE park_id = ? AND visitor_id = ? AND exit_time IS NULL ORDER BY entry_time DESC LIMIT 1");
+        ps1.setInt(1, parkId);
+        ps1.setString(2, visitorId);
+        ps1.executeUpdate();
+        ps1.close();
 
+        // Decrease current visitors but never below 0
+        PreparedStatement ps2 = conn.prepareStatement(
+            "UPDATE parks SET current_visitors = GREATEST(0, current_visitors - ?) WHERE park_id = ?");
+        ps2.setInt(1, numVisitors);
+        ps2.setInt(2, parkId);
+        ps2.executeUpdate();
+        ps2.close();
+    }
 
 
     // === WAITLIST ===
@@ -215,6 +301,8 @@ public class DatabaseController {
         ResultSet keys = ps.getGeneratedKeys();
         int orderId = keys.next() ? keys.getInt(1) : -1;
         keys.close(); ps.close();
+        
+        
 
         // Add to waitlist table
         PreparedStatement wps = conn.prepareStatement(
@@ -235,6 +323,19 @@ public class DatabaseController {
         ps.setInt(1, parkId); ps.setString(2, paramName); ps.setDouble(3, oldVal);
         ps.setDouble(4, newVal); ps.setString(5, "pending"); ps.setInt(6, requestedBy);
         ps.executeUpdate(); ps.close();
+    }
+    
+    
+    public int getWalkinsToday(int parkId) throws SQLException {
+        PreparedStatement ps = conn.prepareStatement(
+            "SELECT COALESCE(SUM(num_visitors), 0) AS total FROM park_visits " +
+            "WHERE park_id = ? AND visit_type = 'walk_in' AND DATE(entry_time) = CURDATE()");
+        ps.setInt(1, parkId);
+        ResultSet rs = ps.executeQuery();
+        int total = 0;
+        if (rs.next()) total = rs.getInt("total");
+        rs.close(); ps.close();
+        return total;
     }
 
     public ArrayList<ArrayList<String>> getPendingParameterRequests() throws SQLException {

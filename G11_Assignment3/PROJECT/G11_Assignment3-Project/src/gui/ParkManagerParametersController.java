@@ -1,91 +1,141 @@
 package gui;
 
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.ResourceBundle;
-
-import client.ClientMessageHandler;
-import client.ClientUI;
-import common.ClientServerMessage;
-import common.Command;
-import common.Park;
+import client.*;
+import common.*;
 import common.worker.GeneralParkWorker;
 import javafx.application.Platform;
-import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
+import javafx.fxml.*;
+import javafx.scene.control.*;
+import java.net.URL;
+import java.util.*;
 
 public class ParkManagerParametersController implements Initializable, ClientMessageHandler {
-    @FXML private Label parkNameLabel, currentVisitorsLabel, statusLabel;
-    @FXML private TextField maxVisitorsField, gapField, durationField;
+    @FXML private Label parkNameLabel, statusLabel;
+    @FXML private Label currentMaxVisitors, currentGap, currentStayTime;
+    @FXML private TextField newMaxVisitors, newGap, newStayTime;
+    @FXML private TableView<ArrayList<String>> requestsTable;
+    @FXML private TableColumn<ArrayList<String>, String> colParam, colOld, colNew, colStatus, colDate;
+
     private Park currentPark;
     private String currentAction;
 
     @Override
-    public void initialize(URL url, ResourceBundle rb) { loadParkInfo(); }
+    public void initialize(URL url, ResourceBundle rb) {
+        colParam.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().get(0)));
+        colOld.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().get(1)));
+        colNew.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().get(2)));
+        colStatus.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().get(3)));
+        colDate.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().get(4)));
 
-    @FXML
-    public void loadParkInfo() {
+        loadParkData();
+    }
+
+    private void loadParkData() {
         GeneralParkWorker w = WorkerLoginController.getLoggedInWorker();
-        currentAction = "LOAD";
+        currentAction = "LOAD_PARK";
         ClientUI.client.setHandler(this);
         ClientUI.client.sendMessage(new ClientServerMessage(Command.GET_PARK_DETAILS, w.getParkId()));
     }
 
     @FXML
-    private void handleSubmitChange() {
-        if (currentPark == null) { statusLabel.setText("Park info not loaded."); return; }
-        GeneralParkWorker w = WorkerLoginController.getLoggedInWorker();
-        try {
-            int newMax = Integer.parseInt(maxVisitorsField.getText().trim());
-            int newGap = Integer.parseInt(gapField.getText().trim());
-            double newDuration = Double.parseDouble(durationField.getText().trim());
+    private void handleSubmit() {
+        if (currentPark == null) { statusLabel.setText("Park data not loaded yet."); return; }
 
-            ArrayList<Object> requests = new ArrayList<>();
-            if (newMax != currentPark.getMaxVisitors()) {
-                requests.add(createRequest(w, "max_visitors", currentPark.getMaxVisitors(), newMax));
-            }
-            if (newGap != currentPark.getGapForWalkins()) {
-                requests.add(createRequest(w, "gap_for_walkins", currentPark.getGapForWalkins(), newGap));
-            }
-            if (newDuration != currentPark.getEstimatedVisitDuration()) {
-                requests.add(createRequest(w, "estimated_visit_duration", currentPark.getEstimatedVisitDuration(), newDuration));
-            }
-            if (requests.isEmpty()) {
-                statusLabel.setText("No changes detected."); statusLabel.setStyle("-fx-text-fill: #f5a623;"); return;
-            }
-            currentAction = "SUBMIT";
-            ClientUI.client.setHandler(this);
-            ClientUI.client.sendMessage(new ClientServerMessage(Command.REQUEST_PARAMETER_CHANGE, requests));
-        } catch (NumberFormatException e) {
-            statusLabel.setText("Please enter valid numbers."); statusLabel.setStyle("-fx-text-fill: #e94560;");
+        String maxV = newMaxVisitors.getText().trim();
+        String gap = newGap.getText().trim();
+        String stay = newStayTime.getText().trim();
+
+        if (maxV.isEmpty() && gap.isEmpty() && stay.isEmpty()) {
+            statusLabel.setText("Enter at least one new value.");
+            statusLabel.setStyle("-fx-text-fill: #f87171;");
+            return;
         }
+
+        GeneralParkWorker w = WorkerLoginController.getLoggedInWorker();
+        int sent = 0;
+
+        try {
+            if (!maxV.isEmpty()) {
+                int val = Integer.parseInt(maxV);
+                if (val <= 0) { statusLabel.setText("Max visitors must be positive."); statusLabel.setStyle("-fx-text-fill: #f87171;"); return; }
+                sendRequest(w, "max_visitors", currentPark.getMaxVisitors(), val); sent++;
+            }
+            if (!gap.isEmpty()) {
+                int val = Integer.parseInt(gap);
+                if (val < 0) { statusLabel.setText("Gap cannot be negative."); statusLabel.setStyle("-fx-text-fill: #f87171;"); return; }
+                sendRequest(w, "gap_for_walkins", currentPark.getGapForWalkins(), val); sent++;
+            }
+            if (!stay.isEmpty()) {
+                double val = Double.parseDouble(stay);
+                if (val <= 0) { statusLabel.setText("Stay time must be positive."); statusLabel.setStyle("-fx-text-fill: #f87171;"); return; }
+                sendRequest(w, "estimated_visit_duration", currentPark.getEstimatedVisitDuration(), val); sent++;
+            }
+        } catch (NumberFormatException e) {
+            statusLabel.setText("Values must be numbers.");
+            statusLabel.setStyle("-fx-text-fill: #f87171;");
+            return;
+        }
+
+        statusLabel.setText(sent + " change request(s) sent for approval.");
+        statusLabel.setStyle("-fx-text-fill: #34d399;");
+        newMaxVisitors.clear(); newGap.clear(); newStayTime.clear();
+
+        // Reload requests after short delay
+        new Thread(() -> {
+            try { Thread.sleep(500); } catch (InterruptedException e) {}
+            Platform.runLater(this::loadRequests);
+        }).start();
     }
 
-    private ArrayList<Object> createRequest(GeneralParkWorker w, String param, double oldVal, double newVal) {
-        ArrayList<Object> req = new ArrayList<>();
-        req.add(w.getParkId()); req.add(param); req.add(oldVal); req.add(newVal); req.add(w.getEmployeeId());
-        return req;
+    private void sendRequest(GeneralParkWorker w, String param, double oldVal, double newVal) {
+        ArrayList<Object> params = new ArrayList<>();
+        params.add(w.getParkId());
+        params.add(param);
+        params.add(oldVal);
+        params.add(newVal);
+        params.add(w.getEmployeeId());
+        currentAction = "SUBMIT";
+        ClientUI.client.setHandler(this);
+        ClientUI.client.sendMessage(new ClientServerMessage(Command.REQUEST_PARAMETER_CHANGE, params));
+    }
+
+    private void loadRequests() {
+        GeneralParkWorker w = WorkerLoginController.getLoggedInWorker();
+        currentAction = "LOAD_REQUESTS";
+        ClientUI.client.setHandler(this);
+        ClientUI.client.sendMessage(new ClientServerMessage(Command.GET_MY_PARAMETER_REQUESTS, w.getParkId()));
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void handleMessage(ClientServerMessage msg) {
         Platform.runLater(() -> {
-            if ("LOAD".equals(currentAction) && msg.getCommand() == Command.DATA_RESPONSE && msg.getData() instanceof Park) {
-                currentPark = (Park) msg.getData();
-                parkNameLabel.setText(currentPark.getParkName());
-                currentVisitorsLabel.setText(String.valueOf(currentPark.getCurrentVisitors()));
-                maxVisitorsField.setText(String.valueOf(currentPark.getMaxVisitors()));
-                gapField.setText(String.valueOf(currentPark.getGapForWalkins()));
-                durationField.setText(String.valueOf(currentPark.getEstimatedVisitDuration()));
-            } else if ("SUBMIT".equals(currentAction) && msg.getCommand() == Command.SUCCESS) {
-                statusLabel.setText("Change request submitted! Awaiting department manager approval.");
-                statusLabel.setStyle("-fx-text-fill: #00e676;");
-            } else if (msg.getCommand() == Command.FAILURE || msg.getCommand() == Command.ERROR) {
-                statusLabel.setText("Error: " + msg.getData()); statusLabel.setStyle("-fx-text-fill: #e94560;");
+            switch (currentAction) {
+                case "LOAD_PARK":
+                    if (msg.getData() instanceof Park) {
+                        currentPark = (Park) msg.getData();
+                        parkNameLabel.setText(currentPark.getParkName());
+                        currentMaxVisitors.setText(String.valueOf(currentPark.getMaxVisitors()));
+                        currentGap.setText(String.valueOf(currentPark.getGapForWalkins()));
+                        currentStayTime.setText(String.valueOf(currentPark.getEstimatedVisitDuration()));
+                        loadRequests();
+                    }
+                    break;
+                case "LOAD_REQUESTS":
+                    if (msg.getData() instanceof ArrayList) {
+                        ArrayList<ArrayList<String>> requests = (ArrayList<ArrayList<String>>) msg.getData();
+                        requestsTable.setItems(FXCollections.observableArrayList(requests));
+                    }
+                    break;
+                case "SUBMIT":
+                    // Status already shown
+                    break;
             }
         });
     }
-    @Override public void onDisconnected(String r) { Platform.runLater(() -> statusLabel.setText(r)); }
+
+    @Override
+    public void onDisconnected(String r) { Platform.runLater(() -> statusLabel.setText(r)); }
 }

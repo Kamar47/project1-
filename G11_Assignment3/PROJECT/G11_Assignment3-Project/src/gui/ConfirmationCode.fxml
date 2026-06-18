@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<VBox alignment="CENTER" spacing="15" xmlns:fx="http://javafx.com/fxml" style="-fx-padding: 30; -fx-background-color: #1a1a2e;" prefWidth="400" prefHeight="350">
-    <Label text="Booking Confirmation" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #2d6a4f;"/>
-    <VBox alignment="CENTER" spacing="8" style="-fx-background-color: #16213e; -fx-padding: 20; -fx-background-radius: 10; -fx-border-color: #2d6a4f; -fx-border-radius: 10; -fx-border-width: 2;">
-        <Label fx:id="codeLabel" text="CONF-XXXXXXXX" style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #00e676; -fx-font-family: 'Consolas';"/>
-        <Label text="Present this code at the park entrance" style="-fx-text-fill: #a0a0b8; -fx-font-size: 11px;"/>
-        <Separator/>
-        <Label fx:id="detailsLabel" text="" style="-fx-text-fill: #c0c0d8; -fx-font-size: 12px;" wrapText="true" textAlignment="CENTER"/>
+<VBox alignment="CENTER" spacing="18" xmlns:fx="http://javafx.com/fxml" style="-fx-padding: 35; -fx-background-color: #12121f;" prefWidth="420" prefHeight="370">
+    <Label text="Booking Confirmation" style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #34d399;"/>
+    <Label text="Your visit has been booked successfully" style="-fx-text-fill: #94a3b8; -fx-font-size: 13px;"/>
+
+    <VBox alignment="CENTER" spacing="10" style="-fx-background-color: #1c1c2e; -fx-padding: 26; -fx-background-radius: 14; -fx-border-color: #34d399; -fx-border-radius: 14; -fx-border-width: 2;">
+        <Label fx:id="codeLabel" text="CONF-XXXXXXXX" style="-fx-font-size: 30px; -fx-font-weight: bold; -fx-text-fill: #34d399; -fx-font-family: 'Consolas';"/>
+        <Label text="Present this code at the park entrance" style="-fx-text-fill: #94a3b8; -fx-font-size: 11px;"/>
+        <Separator style="-fx-opacity: 0.3;"/>
+        <Label fx:id="detailsLabel" text="" style="-fx-text-fill: #e2e8f0; -fx-font-size: 12px;" wrapText="true" textAlignment="CENTER"/>
     </VBox>
-    <Label text="** In production, a QR code would be generated here **" style="-fx-text-fill: #606080; -fx-font-size: 10px; -fx-font-style: italic;"/>
-</VBox>
+
+    <Label text="In production, a QR code would be generated here" style="-fx-text-fill: #64748b; -fx-font-size: 10px; -fx-font-style: italic;"/>
+</VBox> 

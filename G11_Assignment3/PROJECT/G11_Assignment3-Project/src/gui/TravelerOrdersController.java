@@ -87,9 +87,6 @@ public class TravelerOrdersController implements Initializable, ClientMessageHan
             currentAction = "CANCEL";
             ClientUI.client.setHandler(this);
             ClientUI.client.sendMessage(new ClientServerMessage(Command.CANCEL_ORDER, selected.getOrderId()));
-            // Simulate cancellation notification
-            NotificationSimulator.simulateCancellation(selected.getEmail(), selected.getPhone(),
-                selected.getParkName(), selected.getVisitDate());
         }
     }
 

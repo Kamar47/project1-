@@ -100,7 +100,12 @@ public class ParkWorkerEntranceControlController implements Initializable, Clien
                 String today = java.time.LocalDate.now().toString();
                 Order validOrder = null;
                 for (Order o : orders) {
-                    if (o.getStatus().equals("confirmed") && o.getParkId() == w.getParkId() && o.getVisitDate().equals(today)) {
+                    boolean statusOk = o.getStatus() != null &&
+                        (o.getStatus().equalsIgnoreCase("confirmed") || o.getStatus().equalsIgnoreCase("pending"));
+                    boolean parkOk = o.getParkId() == w.getParkId();
+                    // Compare only the date part (handles "2026-06-20" vs "2026-06-20 00:00:00")
+                    boolean dateOk = o.getVisitDate() != null && o.getVisitDate().startsWith(today);
+                    if (statusOk && parkOk && dateOk) {
                         validOrder = o; break;
                     }
                 }
@@ -143,7 +148,11 @@ public class ParkWorkerEntranceControlController implements Initializable, Clien
                 exitIdField.clear();
                 exitCountField.clear();
             } else if (msg.getCommand() == Command.FAILURE || msg.getCommand() == Command.ERROR) {
-                showStatus("Error: " + msg.getData(), true);
+                if ("EXIT".equals(currentAction)) {
+                    showExitStatus("" + msg.getData(), true);
+                } else {
+                    showStatus("" + msg.getData(), true);
+                }
             }
         });
     }

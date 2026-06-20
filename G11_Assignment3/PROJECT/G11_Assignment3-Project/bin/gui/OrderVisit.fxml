@@ -52,8 +52,8 @@
         </VBox>
 
         <VBox spacing="6">
-            <Label text="Phone (optional)" style="-fx-text-fill: #94a3b8; -fx-font-size: 12px;"/>
-            <TextField fx:id="phoneField" promptText="050-1234567" maxWidth="Infinity"
+            <TextFlow><Text text="Phone" style="-fx-fill: #94a3b8; -fx-font-size: 12px;"/><Text text=" *" style="-fx-fill: #f87171; -fx-font-size: 12px; -fx-font-weight: bold;"/></TextFlow>
+            <TextField fx:id="phoneField" promptText="050-1234567 (for reminders)" maxWidth="Infinity"
                        style="-fx-background-color: #252538; -fx-text-fill: #f1f5f9; -fx-prompt-text-fill: #64748b; -fx-border-color: #34344f; -fx-border-radius: 10; -fx-background-radius: 10; -fx-border-width: 1.5; -fx-padding: 10;"/>
         </VBox>
 
@@ -73,7 +73,7 @@
     </VBox>
 
     <Label fx:id="statusLabel" text="" style="-fx-text-fill: #f87171; -fx-font-size: 12px;"/>
-    <Button text="Submit Order" onAction="#handleSubmit"
+    <Button fx:id="submitBtn" text="Submit Order" onAction="#handleSubmit"
             style="-fx-background-color: #10b981; -fx-text-fill: white; -fx-background-radius: 10; -fx-padding: 11 40; -fx-font-size: 14px; -fx-font-weight: bold; -fx-cursor: hand;"/>
 </VBox>
 </ScrollPane>

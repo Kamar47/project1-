@@ -14,6 +14,7 @@ public class OrderAVisitController implements Initializable, ClientMessageHandle
     @FXML private DatePicker datePicker;
     @FXML private TextField visitorsField, emailField, phoneField;
     @FXML private Label priceLabel, statusLabel;
+    @FXML private javafx.scene.control.Button submitBtn;
     private ArrayList<Park> parks;
     private String currentAction;
     private Order pendingOrder;
@@ -55,6 +56,10 @@ public class OrderAVisitController implements Initializable, ClientMessageHandle
     private void handleSubmit() {
         System.out.println("[OrderVisit] Submit clicked");
 
+        // Guard: session must be valid
+        Traveler loggedIn = TravelerLoginController.getLoggedInTraveler();
+        if (loggedIn == null) { showError("Session expired. Please log in again."); return; }
+
         // Check if all fields are empty
         boolean allEmpty = (parkCombo.getValue() == null && datePicker.getValue() == null 
             && timeCombo.getValue() == null && visitorsField.getText().trim().isEmpty() 
@@ -69,6 +74,7 @@ public class OrderAVisitController implements Initializable, ClientMessageHandle
         if (timeCombo.getValue() == null) errors.append("Time, ");
         if (visitorsField.getText().trim().isEmpty()) errors.append("Visitors, ");
         if (emailField.getText().trim().isEmpty()) errors.append("Email, ");
+        if (phoneField.getText().trim().isEmpty()) errors.append("Phone, ");
         if (typeCombo.getValue() == null) errors.append("Visit type, ");
 
         if (errors.length() > 0) {
@@ -132,6 +138,7 @@ public class OrderAVisitController implements Initializable, ClientMessageHandle
         System.out.println("[OrderVisit] Sending CREATE_ORDER: park=" + selectedPark.getParkId()
             + " date=" + order.getVisitDate() + " visitors=" + numVisitors);
 
+        if (submitBtn != null) submitBtn.setDisable(true);
         ClientUI.client.setHandler(this);
         ClientUI.client.sendMessage(new ClientServerMessage(Command.CREATE_ORDER, order));
     }
@@ -160,15 +167,13 @@ public class OrderAVisitController implements Initializable, ClientMessageHandle
                         break;
 
                     case "CREATE":
+                        if (submitBtn != null) submitBtn.setDisable(false);
                         if (msg.getCommand() == Command.SUCCESS) {
                             if (msg.getData() instanceof Order) {
                                 Order confirmed = (Order) msg.getData();
-                                statusLabel.setStyle("-fx-text-fill: #00e676;");
-                                statusLabel.setText("Order confirmed! Code: " + confirmed.getConfirmationCode()
-                                        + " | Price: " + confirmed.getTotalPrice() + " NIS");
-                                NotificationSimulator.simulateBookingConfirmation(
-                                    confirmed.getEmail(), confirmed.getPhone(), confirmed.getConfirmationCode(),
-                                    pendingOrder.getParkName(), confirmed.getVisitDate(), confirmed.getVisitTime());
+                                // carry the park name over for the confirmation screen
+                                if (confirmed.getParkName() == null && pendingOrder != null) confirmed.setParkName(pendingOrder.getParkName());
+                                showConfirmationScreen(confirmed);
                             } else {
                                 statusLabel.setStyle("-fx-text-fill: #00e676;");
                                 statusLabel.setText("Order submitted successfully!");
@@ -225,4 +230,29 @@ public class OrderAVisitController implements Initializable, ClientMessageHandle
 
     @Override
     public void onDisconnected(String reason) { Platform.runLater(() -> showError(reason)); }
+
+    private void showConfirmationScreen(Order confirmed) {
+        try {
+            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("/gui/OrderConfirmation.fxml"));
+            javafx.scene.Parent root = loader.load();
+            OrderConfirmationController ctrl = loader.getController();
+            ctrl.setOrder(confirmed);
+            javafx.scene.Scene scene = new javafx.scene.Scene(root, 460, 640);
+            try { scene.getStylesheets().add(getClass().getResource("/styles/styles.css").toExternalForm()); } catch (Exception ex) {}
+            javafx.stage.Stage stage = new javafx.stage.Stage();
+            stage.setTitle("Order Confirmation");
+            stage.setScene(scene);
+            stage.show();
+            // clear the form behind it
+            visitorsField.clear(); emailField.clear(); phoneField.clear();
+            parkCombo.setValue(null); timeCombo.setValue(null); typeCombo.setValue(null);
+            datePicker.setValue(null); priceLabel.setText("--");
+            statusLabel.setText("");
+        } catch (Exception e) {
+            // fallback to status label if FXML fails
+            statusLabel.setStyle("-fx-text-fill: #34d399;");
+            statusLabel.setText("Order confirmed! Order #" + confirmed.getOrderId());
+        }
+    }
+
 }

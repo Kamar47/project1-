@@ -1,4 +1,5 @@
 package DB;
+import java.sql.Statement;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -14,14 +15,15 @@ public class DatabaseController {
     // === PARKS ===
     public ArrayList<Park> getAllParks() throws SQLException {
         ArrayList<Park> parks = new ArrayList<>();
-        ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM parks");
-        while (rs.next()) {
-            parks.add(new Park(rs.getInt("park_id"), rs.getString("park_name"),
-                rs.getInt("max_visitors"), rs.getInt("gap_for_walkins"),
-                rs.getDouble("estimated_visit_duration"), rs.getInt("current_visitors"),
-                rs.getDouble("full_price")));
+        try (Statement st = conn.createStatement();
+             ResultSet rs = st.executeQuery("SELECT * FROM parks")) {
+            while (rs.next()) {
+                parks.add(new Park(rs.getInt("park_id"), rs.getString("park_name"),
+                    rs.getInt("max_visitors"), rs.getInt("gap_for_walkins"),
+                    rs.getDouble("estimated_visit_duration"), rs.getInt("current_visitors"),
+                    rs.getDouble("full_price")));
+            }
         }
-        rs.close();
         return parks;
     }
 
@@ -129,9 +131,22 @@ public class DatabaseController {
     public int checkAvailability(int parkId, String date, String time) throws SQLException {
         Park park = getParkById(parkId);
         if (park == null) return 0;
+        // Capacity is per time-slot using the park's estimated visit duration (default 4h).
+        // Two bookings overlap if their [start, start+duration) windows intersect.
+        // Overlap test: existing.start < requested.end AND existing.end > requested.start
+        double durationHours = park.getEstimatedVisitDuration() > 0 ? park.getEstimatedVisitDuration() : 4;
+        int durationSecs = (int) (durationHours * 3600);
         PreparedStatement ps = conn.prepareStatement(
-            "SELECT COALESCE(SUM(num_visitors), 0) AS booked FROM orders WHERE park_id = ? AND visit_date = ? AND status IN ('confirmed', 'completed')");
-        ps.setInt(1, parkId); ps.setDate(2, Date.valueOf(date));
+            "SELECT COALESCE(SUM(num_visitors), 0) AS booked FROM orders " +
+            "WHERE park_id = ? AND visit_date = ? AND status IN ('confirmed', 'completed', 'pending') " +
+            "AND TIME(visit_time) < ADDTIME(TIME(?), SEC_TO_TIME(?)) " +
+            "AND ADDTIME(TIME(visit_time), SEC_TO_TIME(?)) > TIME(?)");
+        ps.setInt(1, parkId);
+        ps.setDate(2, Date.valueOf(date));
+        ps.setString(3, time);
+        ps.setInt(4, durationSecs);
+        ps.setInt(5, durationSecs);
+        ps.setString(6, time);
         ResultSet rs = ps.executeQuery();
         int booked = rs.next() ? rs.getInt("booked") : 0;
         rs.close(); ps.close();
@@ -215,6 +230,14 @@ public class DatabaseController {
     }
 
     public void registerGuide(String idNumber, String firstName, String lastName, String email, String phone) throws SQLException {
+        // Prevent duplicate guide registration
+        PreparedStatement check = conn.prepareStatement("SELECT COUNT(*) FROM guides WHERE id_number = ?");
+        check.setString(1, idNumber);
+        ResultSet crs = check.executeQuery();
+        boolean exists = crs.next() && crs.getInt(1) > 0;
+        crs.close(); check.close();
+        if (exists) throw new SQLException("Guide already exists with ID: " + idNumber);
+
         PreparedStatement ps = conn.prepareStatement(
             "INSERT INTO guides (id_number, first_name, last_name, email, phone) VALUES (?,?,?,?,?)");
         ps.setString(1, idNumber); ps.setString(2, firstName); ps.setString(3, lastName);
@@ -263,14 +286,19 @@ public class DatabaseController {
         updateParkVisitors(parkId, numVisitors);
     }
 
-    public void recordExit(int parkId, String visitorId, int numVisitors) throws SQLException {
-        // Record exit time
+    public boolean recordExit(int parkId, String visitorId, int numVisitors) throws SQLException {
+        // Only close a visit that is actually active (entry recorded, no exit yet)
         PreparedStatement ps1 = conn.prepareStatement(
             "UPDATE park_visits SET exit_time = NOW() WHERE park_id = ? AND visitor_id = ? AND exit_time IS NULL ORDER BY entry_time DESC LIMIT 1");
         ps1.setInt(1, parkId);
         ps1.setString(2, visitorId);
-        ps1.executeUpdate();
+        int rowsUpdated = ps1.executeUpdate();
         ps1.close();
+
+        // No active visit for this visitor -> reject (prevents processing exit for someone already out / never entered)
+        if (rowsUpdated == 0) {
+            return false;
+        }
 
         // Decrease current visitors but never below 0
         PreparedStatement ps2 = conn.prepareStatement(
@@ -279,6 +307,7 @@ public class DatabaseController {
         ps2.setInt(2, parkId);
         ps2.executeUpdate();
         ps2.close();
+        return true;
     }
 
 
@@ -340,16 +369,18 @@ public class DatabaseController {
 
     public ArrayList<ArrayList<String>> getPendingParameterRequests() throws SQLException {
         ArrayList<ArrayList<String>> requests = new ArrayList<>();
-        ResultSet rs = conn.createStatement().executeQuery(
-            "SELECT pr.*, p.park_name FROM parameter_requests pr JOIN parks p ON pr.park_id = p.park_id WHERE pr.status = 'pending'");
-        while (rs.next()) {
-            ArrayList<String> row = new ArrayList<>();
-            row.add(String.valueOf(rs.getInt("request_id"))); row.add(rs.getString("park_name"));
-            row.add(rs.getString("parameter_name")); row.add(String.valueOf(rs.getDouble("old_value")));
-            row.add(String.valueOf(rs.getDouble("new_value"))); row.add(rs.getString("status"));
-            requests.add(row);
+        try (Statement st = conn.createStatement();
+             ResultSet rs = st.executeQuery(
+                "SELECT pr.*, p.park_name FROM parameter_requests pr JOIN parks p ON pr.park_id = p.park_id WHERE pr.status = 'pending'")) {
+            while (rs.next()) {
+                ArrayList<String> row = new ArrayList<>();
+                row.add(String.valueOf(rs.getInt("request_id"))); row.add(rs.getString("park_name"));
+                row.add(rs.getString("parameter_name")); row.add(String.valueOf(rs.getDouble("old_value")));
+                row.add(String.valueOf(rs.getDouble("new_value"))); row.add(rs.getString("status"));
+                requests.add(row);
+            }
         }
-        rs.close(); return requests;
+        return requests;
     }
 
     public void approveParameterRequest(int requestId, int approvedBy) throws SQLException {
@@ -357,6 +388,8 @@ public class DatabaseController {
         ps.setInt(1, requestId); ResultSet rs = ps.executeQuery();
         if (rs.next()) {
             String param = rs.getString("parameter_name"); double newVal = rs.getDouble("new_value"); int parkId = rs.getInt("park_id");
+            java.util.Set<String> allowedParams = java.util.Set.of("max_visitors", "gap_for_walkins", "estimated_visit_duration");
+            if (!allowedParams.contains(param)) { rs.close(); ps.close(); throw new SQLException("Invalid parameter name: " + param); }
             PreparedStatement up = conn.prepareStatement("UPDATE parks SET " + param + " = ? WHERE park_id = ?");
             up.setDouble(1, newVal); up.setInt(2, parkId); up.executeUpdate(); up.close();
         }
@@ -381,17 +414,19 @@ public class DatabaseController {
 
     public ArrayList<ArrayList<String>> getPendingPromotions() throws SQLException {
         ArrayList<ArrayList<String>> promos = new ArrayList<>();
-        ResultSet rs = conn.createStatement().executeQuery(
-            "SELECT pr.*, p.park_name FROM promotions pr JOIN parks p ON pr.park_id = p.park_id WHERE pr.status = 'pending'");
-        while (rs.next()) {
-            ArrayList<String> row = new ArrayList<>();
-            row.add(String.valueOf(rs.getInt("promo_id"))); row.add(rs.getString("park_name"));
-            row.add(String.valueOf(rs.getDouble("discount_percentage")));
-            row.add(rs.getDate("start_date").toString()); row.add(rs.getDate("end_date").toString());
-            row.add(rs.getString("description")); row.add(rs.getString("status"));
-            promos.add(row);
+        try (Statement st = conn.createStatement();
+             ResultSet rs = st.executeQuery(
+                "SELECT pr.*, p.park_name FROM promotions pr JOIN parks p ON pr.park_id = p.park_id WHERE pr.status = 'pending'")) {
+            while (rs.next()) {
+                ArrayList<String> row = new ArrayList<>();
+                row.add(String.valueOf(rs.getInt("promo_id"))); row.add(rs.getString("park_name"));
+                row.add(String.valueOf(rs.getDouble("discount_percentage")));
+                row.add(rs.getDate("start_date").toString()); row.add(rs.getDate("end_date").toString());
+                row.add(rs.getString("description")); row.add(rs.getString("status"));
+                promos.add(row);
+            }
         }
-        rs.close(); return promos;
+        return promos;
     }
 
     public void approvePromotion(int promoId, int approvedBy) throws SQLException {
@@ -596,4 +631,30 @@ public class DatabaseController {
         w.setUsername(rs.getString("username")); w.setLoggedIn(rs.getBoolean("is_logged_in"));
         return w;
     }
+
+    // Atomic booking: checks availability and creates the order as ONE locked operation
+    // so two simultaneous clients cannot both book the last spot (prevents overbooking).
+    public synchronized Order bookOrderAtomic(Order order) throws SQLException {
+        int avail = checkAvailability(order.getParkId(), order.getVisitDate(), order.getVisitTime());
+        if (avail >= order.getNumVisitors()) {
+            createOrder(order);
+            return order;
+        }
+        return null; // not enough room
+    }
+
+    // Atomic walk-in: same idea for walk-in entries against the gap.
+    public synchronized boolean walkInAtomic(Order order, Park park) throws SQLException {
+        int walkinsUsed = getWalkinsToday(order.getParkId());
+        int walkinAvailable = park.getGapForWalkins() - walkinsUsed;
+        boolean parkHasRoom = park.getCurrentVisitors() + order.getNumVisitors() <= park.getMaxVisitors();
+        if (order.getNumVisitors() <= walkinAvailable && parkHasRoom) {
+            createOrder(order);
+            recordEntry(order.getOrderId(), order.getParkId(), order.getVisitorId(), order.getNumVisitors());
+            updateOrderStatus(order.getOrderId(), "completed");
+            return true;
+        }
+        return false;
+    }
+
 }

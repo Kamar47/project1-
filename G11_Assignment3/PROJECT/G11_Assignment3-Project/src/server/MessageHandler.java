@@ -1,6 +1,7 @@
 package server;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import common.*;
 import common.worker.GeneralParkWorker;
@@ -79,18 +80,18 @@ public class MessageHandler {
 
                 case CREATE_ORDER:
                     Order newOrder = (Order) msg.getData();
-                    int avail = db.checkAvailability(newOrder.getParkId(), newOrder.getVisitDate(), newOrder.getVisitTime());
-                    if (avail >= newOrder.getNumVisitors()) {
-                        Park park = db.getParkById(newOrder.getParkId());
-                        boolean isSub = newOrder.getSubscriberId() > 0;
-                        double price = Pricing.calculatePrice(newOrder.getOrderType(),
-                            newOrder.getNumVisitors(), park.getFullPrice(), isSub, newOrder.isPaidInAdvance());
-                        newOrder.setTotalPrice(price);
-                        db.createOrder(newOrder);
-                        respond(client, Command.SUCCESS, newOrder);
+                    Park park = db.getParkById(newOrder.getParkId());
+                    boolean isSub = newOrder.getSubscriberId() > 0;
+                    double price = Pricing.calculatePrice(newOrder.getOrderType(),
+                        newOrder.getNumVisitors(), park.getFullPrice(), isSub, newOrder.isPaidInAdvance());
+                    newOrder.setTotalPrice(price);
+                    // Atomic check+book so two simultaneous clients can't overbook the same slot
+                    Order booked = db.bookOrderAtomic(newOrder);
+                    if (booked != null) {
+                        respond(client, Command.SUCCESS, booked);
                     } else {
-                        // Send failure with available spots so client can offer waitlist
-                        ClientServerMessage failMsg = new ClientServerMessage(Command.FAILURE, "No availability. Available spots: " + avail);
+                        int avail = db.checkAvailability(newOrder.getParkId(), newOrder.getVisitDate(), newOrder.getVisitTime());
+                        ClientServerMessage failMsg = new ClientServerMessage(Command.FAILURE, "No availability. Available spots: " + Math.max(0, avail));
                         failMsg.setSuccess(false);
                         client.sendToClient(failMsg);
                     }
@@ -130,14 +131,18 @@ public class MessageHandler {
                 case WALKIN_ORDER:
                     Order walkinOrder = (Order) msg.getData();
                     Park wPark = db.getParkById(walkinOrder.getParkId());
-                    if (wPark.getCurrentVisitors() < wPark.getMaxVisitors()) {
-                        db.createOrder(walkinOrder);
-                        db.recordEntry(walkinOrder.getOrderId(), walkinOrder.getParkId(),
-                            walkinOrder.getVisitorId(), walkinOrder.getNumVisitors());
-                        db.updateOrderStatus(walkinOrder.getOrderId(), "completed");
+                    // Atomic walk-in so concurrent walk-ins can't exceed the gap
+                    boolean walkinOk = db.walkInAtomic(walkinOrder, wPark);
+                    if (walkinOk) {
                         respond(client, Command.SUCCESS, walkinOrder);
                     } else {
-                        respond(client, Command.FAILURE, "Park is full. No walk-in entry possible.");
+                        int used = db.getWalkinsToday(walkinOrder.getParkId());
+                        int leftover = wPark.getGapForWalkins() - used;
+                        if (walkinOrder.getNumVisitors() > leftover) {
+                            respond(client, Command.FAILURE, "Not enough walk-in spots. Available: " + Math.max(0, leftover));
+                        } else {
+                            respond(client, Command.FAILURE, "Park is full. No walk-in entry possible.");
+                        }
                     }
                     break;
 
@@ -158,9 +163,13 @@ public class MessageHandler {
                     int xParkId = (int) exitData.get(0);
                     String xVisitorId = (String) exitData.get(1);
                     int xNum = (int) exitData.get(2);
-                    db.recordExit(xParkId, xVisitorId, xNum);
-                    Park exitPark = db.getParkById(xParkId);
-                    respond(client, Command.SUCCESS, exitPark);
+                    boolean exited = db.recordExit(xParkId, xVisitorId, xNum);
+                    if (exited) {
+                        Park exitPark = db.getParkById(xParkId);
+                        respond(client, Command.SUCCESS, exitPark);
+                    } else {
+                        respond(client, Command.FAILURE, "No active visit found for this visitor. They may have already exited or never entered.");
+                    }
                     break;
 
                 case GET_PARK_DETAILS:
@@ -171,8 +180,12 @@ public class MessageHandler {
 
                 case REGISTER_GUIDE:
                     ArrayList<String> guideData = msg.getDataAsArrayList();
-                    db.registerGuide(guideData.get(0), guideData.get(1), guideData.get(2), guideData.get(3), guideData.get(4));
-                    respond(client, Command.SUCCESS, "Guide registered");
+                    try {
+                        db.registerGuide(guideData.get(0), guideData.get(1), guideData.get(2), guideData.get(3), guideData.get(4));
+                        respond(client, Command.SUCCESS, "Guide registered");
+                    } catch (SQLException ex) {
+                        respond(client, Command.FAILURE, ex.getMessage());
+                    }
                     break;
 
                 case REGISTER_SUBSCRIBER:

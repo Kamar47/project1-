@@ -80,21 +80,41 @@ public class MessageHandler {
 
                 case CREATE_ORDER:
                     Order newOrder = (Order) msg.getData();
+
+                    db.expireOldWaitlistOffers();
+
+                    if (db.hasActiveWaitlistForSlot(newOrder.getParkId(), newOrder.getVisitDate(), newOrder.getVisitTime())) {
+                        ClientServerMessage failMsg = new ClientServerMessage(Command.FAILURE,
+                            "There is already a waiting list for this park, date and time. Please join the waiting list.");
+                        failMsg.setSuccess(false);
+                        client.sendToClient(failMsg);
+                        break;
+                    }
+
                     Park park = db.getParkById(newOrder.getParkId());
+
+                    if (park == null) {
+                        respond(client, Command.ERROR, "Park not found.");
+                        break;
+                    }
+
                     boolean isSub = newOrder.getSubscriberId() > 0;
                     double price = Pricing.calculatePrice(newOrder.getOrderType(),
                         newOrder.getNumVisitors(), park.getFullPrice(), isSub, newOrder.isPaidInAdvance());
                     newOrder.setTotalPrice(price);
-                    // Atomic check+book so two simultaneous clients can't overbook the same slot
+
                     Order booked = db.bookOrderAtomic(newOrder);
+
                     if (booked != null) {
                         respond(client, Command.SUCCESS, booked);
                     } else {
                         int avail = db.checkAvailability(newOrder.getParkId(), newOrder.getVisitDate(), newOrder.getVisitTime());
-                        ClientServerMessage failMsg = new ClientServerMessage(Command.FAILURE, "No availability. Available spots: " + Math.max(0, avail));
+                        ClientServerMessage failMsg = new ClientServerMessage(Command.FAILURE,
+                            "No availability. Available spots: " + Math.max(0, avail));
                         failMsg.setSuccess(false);
                         client.sendToClient(failMsg);
                     }
+
                     break;
 
                 case ADD_TO_WAITLIST:
@@ -118,14 +138,25 @@ public class MessageHandler {
 
                 case CANCEL_ORDER:
                     int cancelId = (int) msg.getData();
-                    db.updateOrderStatus(cancelId, "cancelled");
+
+                    int promoted = db.cancelOrderAndProcessWaitlist(cancelId);
+
+                    if (promoted > 0) {
+                        server.log("[Waitlist] Promoted " + promoted + " waitlist order(s) to pending.");
+                    }
+
                     respond(client, Command.SUCCESS, cancelId);
                     break;
 
                 case CONFIRM_ORDER:
                     int confirmId = (int) msg.getData();
-                    db.updateOrderStatus(confirmId, "confirmed");
-                    respond(client, Command.SUCCESS, confirmId);
+
+                    if (db.confirmWaitlistOffer(confirmId)) {
+                        respond(client, Command.SUCCESS, confirmId);
+                    } else {
+                        respond(client, Command.FAILURE, "Can only confirm pending orders.");
+                    }
+
                     break;
 
                 case WALKIN_ORDER:
@@ -208,14 +239,33 @@ public class MessageHandler {
                     break;
 
                 case REQUEST_PARAMETER_CHANGE:
-                    ArrayList<Object> paramRequests = msg.getDataAsArrayList();
-                    for (Object req : paramRequests) {
+                    ArrayList<Object> paramData = msg.getDataAsArrayList();
+                    // Single request:
+                    // [parkId, parameterName, oldValue, newValue, requestedBy]
+                    if (!paramData.isEmpty() && !(paramData.get(0) instanceof ArrayList)) {
+                        db.createParameterRequest(
+                            ((Number) paramData.get(0)).intValue(),
+                            (String) paramData.get(1),
+                            ((Number) paramData.get(2)).doubleValue(),
+                            ((Number) paramData.get(3)).doubleValue(),
+                            ((Number) paramData.get(4)).intValue()
+                        );
+                        respond(client, Command.SUCCESS, "Parameter change request submitted.");
+                        break;
+                    }
+                    // Multiple requests, in case another screen sends list of lists
+                    for (Object req : paramData) {
                         ArrayList<Object> r = (ArrayList<Object>) req;
-                        db.createParameterRequest((int)r.get(0), (String)r.get(1), ((Number)r.get(2)).doubleValue(), ((Number)r.get(3)).doubleValue(), (int)r.get(4));
+                        db.createParameterRequest(
+                            ((Number) r.get(0)).intValue(),
+                            (String) r.get(1),
+                            ((Number) r.get(2)).doubleValue(),
+                            ((Number) r.get(3)).doubleValue(),
+                            ((Number) r.get(4)).intValue()
+                        );
                     }
                     respond(client, Command.SUCCESS, "Parameter change requests submitted.");
                     break;
-
                 case GET_CHANGE_REQUESTS:
                     ArrayList<ArrayList<ArrayList<String>>> allRequests = new ArrayList<>();
                     allRequests.add(db.getPendingParameterRequests());

@@ -33,7 +33,15 @@ public class ParkManagerParametersController implements Initializable, ClientMes
     }
 
     private void loadParkData() {
+        if (!ClientUI.isServerConnected()) {
+            showStatus("Server disconnected. Cannot load park parameters.", true);
+            return;
+        }
         GeneralParkWorker w = WorkerLoginController.getLoggedInWorker();
+        if (w == null) {
+            showStatus("Worker session expired. Please log in again.", true);
+            return;
+        }
         currentAction = "LOAD_PARK";
         ClientUI.client.setHandler(this);
         ClientUI.client.sendMessage(new ClientServerMessage(Command.GET_PARK_DETAILS, w.getParkId()));
@@ -41,7 +49,11 @@ public class ParkManagerParametersController implements Initializable, ClientMes
 
     @FXML
     private void handleSubmit() {
-        if (currentPark == null) { statusLabel.setText("Park data not loaded yet."); return; }
+    	if (!ClientUI.isServerConnected()) {
+            showStatus("Server disconnected. Cannot submit parameter change.", true);
+            return;
+        }
+    	if (currentPark == null) { statusLabel.setText("Park data not loaded yet."); return; }
 
         String maxV = newMaxVisitors.getText().trim();
         String gap = newGap.getText().trim();
@@ -90,7 +102,13 @@ public class ParkManagerParametersController implements Initializable, ClientMes
     }
 
     private void sendRequest(GeneralParkWorker w, String param, double oldVal, double newVal) {
-        ArrayList<Object> params = new ArrayList<>();
+    	if (!ClientUI.isServerConnected()) {
+            showStatus("Server disconnected. Cannot send request.", true);
+            return;}
+        if (w == null) {
+            showStatus("Worker session expired. Please log in again.", true);
+            return;}
+    	ArrayList<Object> params = new ArrayList<>();
         params.add(w.getParkId());
         params.add(param);
         params.add(oldVal);
@@ -102,7 +120,13 @@ public class ParkManagerParametersController implements Initializable, ClientMes
     }
 
     private void loadRequests() {
+        if (!ClientUI.isServerConnected()) {
+            showStatus("Server disconnected. Cannot load parameter requests.", true);
+            return;}
         GeneralParkWorker w = WorkerLoginController.getLoggedInWorker();
+        if (w == null) {
+            showStatus("Worker session expired. Please log in again.", true);
+            return;}
         currentAction = "LOAD_REQUESTS";
         ClientUI.client.setHandler(this);
         ClientUI.client.sendMessage(new ClientServerMessage(Command.GET_MY_PARAMETER_REQUESTS, w.getParkId()));
@@ -135,7 +159,17 @@ public class ParkManagerParametersController implements Initializable, ClientMes
             }
         });
     }
+    private void showStatus(String msg, boolean error) {
+        statusLabel.setWrapText(true);
+        statusLabel.setMaxWidth(600);
+        statusLabel.setText(msg);
+        statusLabel.setStyle("-fx-text-fill: " + (error ? "#e94560" : "#34d399") + ";");
+    }
 
     @Override
-    public void onDisconnected(String r) { Platform.runLater(() -> statusLabel.setText(r)); }
+    public void onDisconnected(String r) {
+        Platform.runLater(() -> {
+            showStatus("Server disconnected. Actions are unavailable.", true);
+        });
+    }
 }

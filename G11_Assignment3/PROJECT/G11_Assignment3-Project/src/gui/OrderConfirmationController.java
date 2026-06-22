@@ -6,7 +6,7 @@ import javafx.scene.control.Label;
 import javafx.stage.Stage;
 
 public class OrderConfirmationController {
-    @FXML private Label dateLabel, timeLabel, parkLabel, typeLabel, visitorsLabel, statusLabel, priceLabel, orderNumberLabel;
+    @FXML private Label dateLabel, timeLabel, parkLabel, typeLabel, visitorsLabel, statusLabel, priceLabel, orderNumberLabel, confirmationCodeLabel;
 
     /** Called after FXML load to fill in the order details */
     public void setOrder(Order order) {
@@ -16,6 +16,7 @@ public class OrderConfirmationController {
         typeLabel.setText(formatType(order.getOrderType()));
         visitorsLabel.setText(String.valueOf(order.getNumVisitors()));
         statusLabel.setText(order.getStatus() != null ? order.getStatus().toUpperCase() : "PENDING");
+        confirmationCodeLabel.setText(order.getConfirmationCode() != null ? order.getConfirmationCode() : "--");
         priceLabel.setText(order.getTotalPrice() + " NIS");
         orderNumberLabel.setText(String.valueOf(order.getOrderId()));
     }

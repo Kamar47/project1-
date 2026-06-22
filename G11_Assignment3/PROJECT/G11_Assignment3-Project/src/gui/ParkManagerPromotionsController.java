@@ -46,11 +46,20 @@ public class ParkManagerPromotionsController implements Initializable, ClientMes
             }
         });
 
+        if (!ClientUI.isServerConnected()) {
+            showStatus("Server disconnected. Cannot create or load promotions.", true);
+            return;
+        }
+
         loadPromotions();
     }
 
     @FXML
     private void handleSubmit() {
+    	if (!ClientUI.isServerConnected()) {
+            showStatus("Server disconnected. Cannot submit promotion request.", true);
+            return;
+        }
         String discountStr = discountField.getText().trim();
         LocalDate start = startDatePicker.getValue();
         LocalDate end = endDatePicker.getValue();
@@ -87,14 +96,21 @@ public class ParkManagerPromotionsController implements Initializable, ClientMes
     }
 
     private void showError(String msg) {
-        statusLabel.setText(msg);
-        statusLabel.setStyle("-fx-text-fill: #f87171;");
+        showStatus(msg, true);
     }
 
     @FXML private void handleRefresh() { loadPromotions(); }
 
     private void loadPromotions() {
+        if (!ClientUI.isServerConnected()) {
+            showStatus("Server disconnected. Cannot load promotions.", true);
+            return;
+        }
         GeneralParkWorker w = WorkerLoginController.getLoggedInWorker();
+        if (w == null) {
+            showStatus("Worker session expired. Please log in again.", true);
+            return;
+        }
         currentAction = "LOAD";
         ClientUI.client.setHandler(this);
         ClientUI.client.sendMessage(new ClientServerMessage(Command.GET_MY_PROMOTIONS, w.getParkId()));
@@ -125,7 +141,17 @@ public class ParkManagerPromotionsController implements Initializable, ClientMes
             }
         });
     }
+    private void showStatus(String msg, boolean error) {
+        statusLabel.setWrapText(true);
+        statusLabel.setMaxWidth(700);
+        statusLabel.setText(msg);
+        statusLabel.setStyle("-fx-text-fill: " + (error ? "#e94560" : "#00e676") + ";");
+    }
 
     @Override
-    public void onDisconnected(String r) { Platform.runLater(() -> statusLabel.setText(r)); }
+    public void onDisconnected(String r) {
+        Platform.runLater(() -> {
+            showStatus("Server disconnected. Cannot create or load promotions.", true);
+        });
+    }
 }

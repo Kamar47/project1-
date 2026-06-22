@@ -9,7 +9,13 @@ import javafx.stage.Stage;
 
 public class ClientUI extends Application {
     public static GoNatureClient client;
+    public static boolean isServerConnected() {
+        return client != null && client.isConnected();
+    }
 
+    public static void markDisconnected() {
+        client = null;
+    }
     @Override
     public void start(Stage primaryStage) throws Exception {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/gui/HomePageFrame.fxml"));

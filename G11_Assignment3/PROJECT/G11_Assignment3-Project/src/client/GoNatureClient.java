@@ -31,15 +31,44 @@ public class GoNatureClient extends AbstractClient {
 
     @Override
     protected void connectionClosed() {
-        if (handler != null) handler.onDisconnected("Disconnected from server.");
+        ClientUI.markDisconnected();
+
+        if (handler != null) {
+            handler.onDisconnected("Disconnected from server. Please reconnect before continuing.");
+        }
     }
 
     @Override
     protected void connectionException(Exception ex) {
-        if (handler != null) handler.onDisconnected("Disconnected from server.");
+        ClientUI.markDisconnected();
+
+        if (handler != null) {
+            handler.onDisconnected("Server connection lost. Please reconnect before continuing.");
+        }
     }
 
-    public void sendMessage(ClientServerMessage msg) {
-        try { sendToServer(msg); } catch (Exception e) { System.err.println("Send error: " + e.getMessage()); }
+    public boolean sendMessage(ClientServerMessage msg) {
+        if (!isConnected()) {
+            ClientUI.markDisconnected();
+
+            if (handler != null) {
+                handler.onDisconnected("Cannot perform this action because the server is disconnected.");
+            }
+
+            return false;
+        }
+
+        try {
+            sendToServer(msg);
+            return true;
+        } catch (Exception e) {
+            ClientUI.markDisconnected();
+
+            if (handler != null) {
+                handler.onDisconnected("Failed to send request. Server may be disconnected.");
+            }
+
+            return false;
+        }
     }
 }

@@ -31,6 +31,7 @@ public class TravelerOrdersController implements Initializable, ClientMessageHan
     @FXML private Label statusLabel;
     private ObservableList<Order> orderData = FXCollections.observableArrayList();
     private String currentAction;
+    private Order lastActionOrder;
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -65,6 +66,11 @@ public class TravelerOrdersController implements Initializable, ClientMessageHan
 
     @FXML
     public void loadOrders() {
+    	if (!ClientUI.isServerConnected()) {
+            showStatus("Server is disconnected. Cannot load orders.", true);
+            return;
+        }
+    	
         currentAction = "LOAD";
         ClientUI.client.setHandler(this);
         String id = TravelerLoginController.getLoggedInTraveler().getIdNumber();
@@ -73,6 +79,10 @@ public class TravelerOrdersController implements Initializable, ClientMessageHan
 
     @FXML
     private void handleCancel() {
+    	if (!ClientUI.isServerConnected()) {
+    	    showStatus("Server is disconnected. Cannot cancel order.", true);
+    	    return;
+    	}
         Order selected = ordersTable.getSelectionModel().getSelectedItem();
         if (selected == null) { showStatus("Select an order first.", true); return; }
         if (!"confirmed".equals(selected.getStatus()) && !"pending".equals(selected.getStatus()) && !"waitlist".equals(selected.getStatus())) {
@@ -85,6 +95,7 @@ public class TravelerOrdersController implements Initializable, ClientMessageHan
         Optional<ButtonType> result = confirm.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
             currentAction = "CANCEL";
+            lastActionOrder = selected;
             ClientUI.client.setHandler(this);
             ClientUI.client.sendMessage(new ClientServerMessage(Command.CANCEL_ORDER, selected.getOrderId()));
         }
@@ -92,6 +103,10 @@ public class TravelerOrdersController implements Initializable, ClientMessageHan
 
     @FXML
     private void handleConfirm() {
+    	if (!ClientUI.isServerConnected()) {
+    	    showStatus("Server is disconnected. Cannot cancel order.", true);
+    	    return;
+    	}
         Order selected = ordersTable.getSelectionModel().getSelectedItem();
         if (selected == null) { showStatus("Select an order first.", true); return; }
         if (!"pending".equals(selected.getStatus())) {
@@ -116,7 +131,15 @@ public class TravelerOrdersController implements Initializable, ClientMessageHan
                 orderData.addAll((ArrayList<Order>) msg.getData());
                 showStatus(orderData.size() + " orders loaded.", false);
             } else if (msg.getCommand() == Command.SUCCESS) {
-                if ("CANCEL".equals(currentAction)) showStatus("Order cancelled successfully.", false);
+                if ("CANCEL".equals(currentAction)) {
+                    showStatus("Order cancelled successfully.", false);
+                    // Simulate the cancellation email to the visitor
+                    if (lastActionOrder != null) {
+                        NotificationSimulator.simulateCancellation(
+                                lastActionOrder.getEmail(), lastActionOrder.getPhone(),
+                                lastActionOrder.getParkName(), lastActionOrder.getVisitDate());
+                    }
+                }
                 else if ("CONFIRM".equals(currentAction)) showStatus("Order confirmed successfully.", false);
                 loadOrders();
             } else if (msg.getCommand() == Command.FAILURE) {

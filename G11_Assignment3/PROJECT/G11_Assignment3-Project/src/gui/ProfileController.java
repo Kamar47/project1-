@@ -35,8 +35,11 @@ public class ProfileController implements Initializable, ClientMessageHandler {
             roleLabel.setText(t.isGuide() ? "Traveler (Guide)" : "Traveler");
             subscriberLabel.setText(t.getSubscriberId() > 0 ? "Yes (Member #" + t.getSubscriberId() + ")" : "No");
         }
+        if (!ClientUI.isServerConnected()) {
+            subscriberLabel.setText("Server disconnected. ");
+            subscriberLabel.setStyle("-fx-text-fill: #e94560;");
+        }
     }
-
     private void showWorkerProfile() {
         GeneralParkWorker w = WorkerLoginController.getLoggedInWorker();
         if (w != null) {
@@ -44,7 +47,15 @@ public class ProfileController implements Initializable, ClientMessageHandler {
             idLabel.setText("Employee #" + w.getEmployeeId());
             emailLabel.setText(w.getEmail());
             roleLabel.setText(formatRole(w.getRole()));
-            subscriberLabel.setText("N/A");
+            if (w.getParkId() > 0) {
+                subscriberLabel.setText("Park ID: " + w.getParkId());
+            } else {
+                subscriberLabel.setText("N/A");
+            }
+            if (!ClientUI.isServerConnected()) {
+                subscriberLabel.setText("Server disconnected.");
+                subscriberLabel.setStyle("-fx-text-fill: #e94560;");
+                return; }
             if (w.getParkId() > 0) {
                 ClientUI.client.setHandler(this);
                 ClientUI.client.sendMessage(new ClientServerMessage(Command.GET_PARK_DETAILS, w.getParkId()));
@@ -73,5 +84,10 @@ public class ProfileController implements Initializable, ClientMessageHandler {
     }
 
     @Override
-    public void onDisconnected(String reason) {}
+    public void onDisconnected(String reason) {
+        Platform.runLater(() -> {
+            subscriberLabel.setText("Server disconnected. ");
+            subscriberLabel.setStyle("-fx-text-fill: #e94560;");
+        });
+    }
 }

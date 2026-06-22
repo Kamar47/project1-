@@ -5,6 +5,8 @@ import client.ClientUI;
 import client.InputValidation;
 import client.NavigationManager;
 import common.ClientServerMessage;
+import javafx.application.Platform;
+import common.ClientServerMessage;
 import common.Command;
 import common.Traveler;
 import javafx.application.Platform;
@@ -18,7 +20,18 @@ public class TravelerLoginController implements ClientMessageHandler {
     private static Traveler loggedInTraveler;
 
     @FXML
+    private void initialize() {
+        if (ClientUI.client != null) {
+            ClientUI.client.setHandler(this);
+        }
+    }
+    
+    @FXML
     private void handleLogin() {
+    	if (!ClientUI.isServerConnected()) {
+    	    showError("Server is disconnected. Please reconnect from the home page.");
+    	    return;
+    	}
         String id = idField.getText().trim();
         if (id.isEmpty()) { errorLabel.setText("Please enter your ID number."); return; }
         if (!id.matches("\\d+")) { errorLabel.setText("ID must contain only numbers."); return; }
@@ -55,4 +68,8 @@ public class TravelerLoginController implements ClientMessageHandler {
     }
 
     public static Traveler getLoggedInTraveler() { return loggedInTraveler; }
+    private void showError(String message) {
+        errorLabel.setText(message);
+        errorLabel.setStyle("-fx-text-fill: #e94560;");
+    }
 }

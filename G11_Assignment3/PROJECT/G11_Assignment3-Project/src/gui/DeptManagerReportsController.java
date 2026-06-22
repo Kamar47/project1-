@@ -29,6 +29,10 @@ public class DeptManagerReportsController implements Initializable, ClientMessag
         monthCombo.setItems(FXCollections.observableArrayList("1","2","3","4","5","6","7","8","9","10","11","12"));
         yearCombo.setItems(FXCollections.observableArrayList("2025","2026","2027"));
         yearCombo.setValue("2026");
+        if (!ClientUI.isServerConnected()) {
+            showStatus("Server disconnected. Cannot load or generate reports.", true);
+            return;
+        }
         currentAction = "LOAD_PARKS";
         ClientUI.client.setHandler(this);
         ClientUI.client.sendMessage(new ClientServerMessage(Command.GET_ALL_PARKS));
@@ -36,8 +40,16 @@ public class DeptManagerReportsController implements Initializable, ClientMessag
 
     @FXML
     private void handleGenerate() {
+    	if (!ClientUI.isServerConnected()) {
+            showStatus("Server disconnected. Cannot generate report.", true);
+            return;
+        }
         if (reportTypeCombo.getValue() == null || parkCombo.getValue() == null || monthCombo.getValue() == null) {
             statusLabel.setText("Please select all fields."); statusLabel.setStyle("-fx-text-fill: #e94560;"); return;
+        }
+        if (parks == null || parks.isEmpty()) {
+            showStatus("Park list is not loaded. Please reconnect to the server.", true);
+            return;
         }
         Park selected = parks.stream().filter(p -> p.getParkName().equals(parkCombo.getValue())).findFirst().orElse(null);
         if (selected == null) return;
@@ -55,6 +67,10 @@ public class DeptManagerReportsController implements Initializable, ClientMessag
 
     @FXML
     private void handleViewExisting() {
+    	if (!ClientUI.isServerConnected()) {
+            showStatus("Server disconnected. Cannot view saved reports.", true);
+            return;
+        }
         currentAction = "VIEW_REPORTS";
         ClientUI.client.setHandler(this);
         ClientUI.client.sendMessage(new ClientServerMessage(Command.GET_ALL_REPORTS));
@@ -274,7 +290,17 @@ public class DeptManagerReportsController implements Initializable, ClientMessag
         if (!c3.isEmpty()) { Label l3 = new Label(c3); l3.setStyle(style); grid.add(l3, 2, row); }
         if (!c4.isEmpty()) { Label l4 = new Label(c4); l4.setStyle(style); grid.add(l4, 3, row); }
     }
+    private void showStatus(String msg, boolean error) {
+        statusLabel.setWrapText(true);
+        statusLabel.setMaxWidth(700);
+        statusLabel.setText(msg);
+        statusLabel.setStyle("-fx-text-fill: " + (error ? "#e94560" : "#00e676") + ";");
+    }
 
     @Override
-    public void onDisconnected(String r) { Platform.runLater(() -> statusLabel.setText(r)); }
+    public void onDisconnected(String r) {
+        Platform.runLater(() -> {
+            showStatus("Server disconnected. Cannot load or generate reports.", true);
+        });
+    }
 }

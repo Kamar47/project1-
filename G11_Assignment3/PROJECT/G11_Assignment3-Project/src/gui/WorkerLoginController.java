@@ -19,7 +19,17 @@ public class WorkerLoginController implements ClientMessageHandler {
     private static GeneralParkWorker loggedInWorker;
 
     @FXML
+    private void initialize() {
+        if (ClientUI.client != null) {
+            ClientUI.client.setHandler(this);
+        }
+    }
+    @FXML
     private void handleLogin() {
+    	if (!ClientUI.isServerConnected()) {
+    	    showError("Server is disconnected. Please reconnect from the home page.");
+    	    return;
+    	}
         String user = usernameField.getText().trim();
         String pass = passwordField.getText();
         if (user.isEmpty() || pass.isEmpty()) { errorLabel.setText("Please fill in all fields."); return; }
@@ -58,6 +68,10 @@ public class WorkerLoginController implements ClientMessageHandler {
     @Override
     public void onDisconnected(String reason) {
         Platform.runLater(() -> errorLabel.setText(reason));
+    }
+    private void showError(String message) {
+        errorLabel.setText(message);
+        errorLabel.setStyle("-fx-text-fill: #e94560;");
     }
 
     public static GeneralParkWorker getLoggedInWorker() { return loggedInWorker; }

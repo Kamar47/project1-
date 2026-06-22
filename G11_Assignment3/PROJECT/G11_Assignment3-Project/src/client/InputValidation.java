@@ -7,9 +7,9 @@ import java.util.regex.Pattern;
  * Centralized input validation for all client screens.
  */
 public class InputValidation {
-    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
-    private static final Pattern PHONE_PATTERN = Pattern.compile("^[0-9\\-+() ]{7,20}$");
-    private static final Pattern ID_PATTERN = Pattern.compile("^\\d{1,15}$");
+	private static final Pattern EMAIL_PATTERN =Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
+    private static final Pattern PHONE_PATTERN =Pattern.compile("^05\\d{8}$");
+	private static final Pattern ID_PATTERN = Pattern.compile("^\\d{1,15}$");
 
     public static String validateId(String id) {
         if (id == null || id.trim().isEmpty()) return "ID number is required.";
@@ -41,14 +41,38 @@ public class InputValidation {
     }
 
     public static String validateEmail(String email) {
-        if (email == null || email.trim().isEmpty()) return "Email is required.";
-        if (!EMAIL_PATTERN.matcher(email.trim()).matches()) return "Invalid email format.";
+        if (email == null || email.trim().isEmpty()) {
+            return "Email is required.";
+        }
+
+        String cleanEmail = email.trim();
+
+        if (!EMAIL_PATTERN.matcher(cleanEmail).matches()) {
+            return "Invalid email format. Example: name@example.com";
+        }
+
         return null;
     }
 
     public static String validatePhone(String phone) {
-        if (phone == null || phone.trim().isEmpty()) return null; // phone is optional
-        if (!PHONE_PATTERN.matcher(phone.trim()).matches()) return "Invalid phone format.";
+        if (phone == null || phone.trim().isEmpty()) {
+            return "Phone number is required.";
+        }
+
+        /*
+         * Allows:
+         * 0501234567
+         * 050-1234567
+         * 050 1234567
+         */
+        String cleanPhone = phone.trim()
+                .replace("-", "")
+                .replace(" ", "");
+
+        if (!PHONE_PATTERN.matcher(cleanPhone).matches()) {
+            return "Invalid phone number. Phone must start with 05 and contain exactly 10 digits.";
+        }
+
         return null;
     }
 

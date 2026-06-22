@@ -25,7 +25,10 @@ public class ParkWorkerFrameController implements Initializable {
                 mainBorderPane.getScene().getWindow().setOnCloseRequest(event -> {
                     GeneralParkWorker worker = WorkerLoginController.getLoggedInWorker();
                     if (worker != null) {
-                        ClientUI.client.sendMessage(new ClientServerMessage(Command.WORKER_LOGOUT, worker.getEmployeeId()));
+                    	if (ClientUI.isServerConnected()) {
+                    	    ClientUI.client.sendMessage(new ClientServerMessage(Command.WORKER_LOGOUT, worker.getEmployeeId()));
+                    	    try { Thread.sleep(500); } catch (InterruptedException ex) {}
+                    	}
                         try { Thread.sleep(500); } catch (InterruptedException ex) {}
                     }
                 });
@@ -37,9 +40,11 @@ public class ParkWorkerFrameController implements Initializable {
     @FXML private void showCheckSpace() { loadPage("ParkWorkerCheckSpace.fxml"); }
     @FXML private void showEntranceControl() { loadPage("ParkWorkerEntranceControl.fxml"); }
     @FXML private void showUnorderedVisit() { loadPage("ParkWorkerUnorderedVisit.fxml"); }
-    @FXML private void handleLogout() {
+    @FXML
+    private void handleLogout() {
         GeneralParkWorker w = WorkerLoginController.getLoggedInWorker();
-        if (w != null) {
+
+        if (w != null && ClientUI.isServerConnected()) {
             ClientUI.client.sendMessage(new ClientServerMessage(Command.WORKER_LOGOUT, w.getEmployeeId()));
             try { Thread.sleep(500); } catch (InterruptedException ex) {}
         }

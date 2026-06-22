@@ -25,6 +25,7 @@
         <HBox spacing="10"><Label text="Type" style="-fx-text-fill: #34d399; -fx-min-width: 110; -fx-font-size: 13px;"/><Label fx:id="typeLabel" style="-fx-text-fill: #f1f5f9; -fx-font-size: 14px;"/></HBox>
         <HBox spacing="10"><Label text="Visitors" style="-fx-text-fill: #34d399; -fx-min-width: 110; -fx-font-size: 13px;"/><Label fx:id="visitorsLabel" style="-fx-text-fill: #f1f5f9; -fx-font-size: 14px;"/></HBox>
         <HBox spacing="10"><Label text="Order Status" style="-fx-text-fill: #34d399; -fx-min-width: 110; -fx-font-size: 13px;"/><Label fx:id="statusLabel" style="-fx-text-fill: #fbbf24; -fx-font-size: 14px; -fx-font-weight: bold;"/></HBox>
+        <HBox spacing="10"><Label text="Confirmation Code" style="-fx-text-fill: #34d399; -fx-min-width: 110; -fx-font-size: 13px;"/><Label fx:id="confirmationCodeLabel" style="-fx-text-fill: #f1f5f9; -fx-font-size: 14px; -fx-font-weight: bold;"/></HBox>
         <Separator style="-fx-opacity: 0.3;"/>
         <HBox spacing="10"><Label text="Total Price" style="-fx-text-fill: #34d399; -fx-min-width: 110; -fx-font-size: 13px;"/><Label fx:id="priceLabel" style="-fx-text-fill: #34d399; -fx-font-size: 16px; -fx-font-weight: bold;"/></HBox>
     </VBox>

@@ -50,6 +50,10 @@ public class DeptManagerRequestsController implements Initializable, ClientMessa
 
     @FXML
     public void loadRequests() {
+    	if (!ClientUI.isServerConnected()) {
+    	    showStatus("Server disconnected. Cannot load requests.", true);
+    	    return;
+    	}
         currentAction = "LOAD";
         ClientUI.client.setHandler(this);
         ClientUI.client.sendMessage(new ClientServerMessage(Command.GET_CHANGE_REQUESTS));
@@ -59,7 +63,11 @@ public class DeptManagerRequestsController implements Initializable, ClientMessa
     @FXML private void handleRejectParam() { processParamRequest("REJECT"); }
 
     private void processParamRequest(String action) {
-        ArrayList<String> selected = paramRequestsTable.getSelectionModel().getSelectedItem();
+    	if (!ClientUI.isServerConnected()) {
+            showStatus("Server disconnected. Cannot process parameter request.", true);
+            return;
+        }
+    	ArrayList<String> selected = paramRequestsTable.getSelectionModel().getSelectedItem();
         if (selected == null) { statusLabel.setText("Select a request first."); statusLabel.setStyle("-fx-text-fill: #e94560;"); return; }
         GeneralParkWorker w = WorkerLoginController.getLoggedInWorker();
         ArrayList<Object> data = new ArrayList<>();
@@ -75,7 +83,11 @@ public class DeptManagerRequestsController implements Initializable, ClientMessa
     @FXML private void handleRejectPromo() { processPromoRequest(Command.REJECT_PROMOTION); }
 
     private void processPromoRequest(Command cmd) {
-        ArrayList<String> selected = promoRequestsTable.getSelectionModel().getSelectedItem();
+    	if (!ClientUI.isServerConnected()) {
+            showStatus("Server disconnected. Cannot process promotion request.", true);
+            return;
+        }
+    	ArrayList<String> selected = promoRequestsTable.getSelectionModel().getSelectedItem();
         if (selected == null) { statusLabel.setText("Select a promotion first."); statusLabel.setStyle("-fx-text-fill: #e94560;"); return; }
         GeneralParkWorker w = WorkerLoginController.getLoggedInWorker();
         ArrayList<Object> data = new ArrayList<>();
@@ -108,5 +120,16 @@ public class DeptManagerRequestsController implements Initializable, ClientMessa
             }
         });
     }
-    @Override public void onDisconnected(String r) { Platform.runLater(() -> statusLabel.setText(r)); }
+    private void showStatus(String msg, boolean error) {
+        statusLabel.setWrapText(true);
+        statusLabel.setMaxWidth(600);
+        statusLabel.setText(msg);
+        statusLabel.setStyle("-fx-text-fill: " + (error ? "#e94560" : "#a0a0b8") + ";");
+    }
+    @Override
+    public void onDisconnected(String r) {
+        Platform.runLater(() -> {
+            showStatus("Server disconnected. Cannot load or process requests.", true);
+        });
+    }
 }

@@ -53,13 +53,24 @@ public class ParkManagerCreateReportController implements Initializable, ClientM
                     }
                 });
                 return row;
-            });
+            });   
+        }
+        if (!ClientUI.isServerConnected()) {
+            showStatus("Server disconnected. Cannot generate or view reports.", true);
         }
     }
 
     @FXML
     private void handleViewSaved() {
+        if (!ClientUI.isServerConnected()) {
+            showStatus("Server disconnected. Cannot view saved reports.", true);
+            return;
+        }
         GeneralParkWorker w = WorkerLoginController.getLoggedInWorker();
+        if (w == null) {
+            showStatus("Worker session expired. Please log in again.", true);
+            return;
+        }
         currentAction = "VIEW_SAVED";
         ClientUI.client.setHandler(this);
         ClientUI.client.sendMessage(new ClientServerMessage(Command.GET_ALL_REPORTS, w.getParkId()));
@@ -207,22 +218,43 @@ public class ParkManagerCreateReportController implements Initializable, ClientM
 
     @FXML
     private void handleGenerate() {
+        if (!ClientUI.isServerConnected()) {
+            showStatus("Server disconnected. Cannot generate report.", true);
+            return;
+        }
         if (reportTypeCombo.getValue() == null || monthCombo.getValue() == null) {
-            statusLabel.setText("Please select report type and month."); statusLabel.setStyle("-fx-text-fill: #e94560;"); return;
+            showStatus("Please select report type and month.", true);
+            return;
         }
         GeneralParkWorker w = WorkerLoginController.getLoggedInWorker();
+        if (w == null) {
+            showStatus("Worker session expired. Please log in again.", true);
+            return;
+        }
         ArrayList<Object> params = new ArrayList<>();
         params.add(w.getParkId());
         params.add(Integer.parseInt(monthCombo.getValue()));
         params.add(Integer.parseInt(yearCombo.getValue()));
         params.add(w.getEmployeeId());
-        Command cmd = reportTypeCombo.getValue().contains("Total") ? Command.GENERATE_TOTAL_VISITORS_REPORT : Command.GENERATE_USAGE_REPORT;
+        Command cmd = reportTypeCombo.getValue().contains("Total")
+                ? Command.GENERATE_TOTAL_VISITORS_REPORT
+                : Command.GENERATE_USAGE_REPORT;
+
         currentAction = "GENERATE";
         ClientUI.client.setHandler(this);
         ClientUI.client.sendMessage(new ClientServerMessage(cmd, params));
     }
 
     @FXML private void handleSave() {
+    	if (!ClientUI.isServerConnected()) {
+            showStatus("Server disconnected. Cannot save report.", true);
+            return;
+        }
+
+        if (lastReportData == null || lastReportData.trim().isEmpty()) {
+            showStatus("No report to save. Generate a report first.", true);
+            return;
+        }
         GeneralParkWorker w = WorkerLoginController.getLoggedInWorker();
         String comment = commentField != null ? commentField.getText().trim() : "";
         String reportData = lastReportData;
@@ -451,6 +483,12 @@ public class ParkManagerCreateReportController implements Initializable, ClientM
         Scene scene = new Scene(root, 500, 600);
         popup.setScene(scene);
         popup.show();
+    }
+    private void showStatus(String msg, boolean error) {
+        statusLabel.setWrapText(true);
+        statusLabel.setMaxWidth(700);
+        statusLabel.setText(msg);
+        statusLabel.setStyle("-fx-text-fill: " + (error ? "#e94560" : "#00e676") + ";");
     }
 
     @Override

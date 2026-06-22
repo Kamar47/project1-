@@ -23,6 +23,10 @@ public class ParkWorkerCheckSpaceController implements Initializable, ClientMess
 
     @FXML
     public void loadParkInfo() {
+    	if (!ClientUI.isServerConnected()) {
+            showStatus("Server is disconnected.", true);
+            return;
+        }
         GeneralParkWorker w = WorkerLoginController.getLoggedInWorker();
         if (w != null) {
             ClientUI.client.setHandler(this);
@@ -51,7 +55,11 @@ public class ParkWorkerCheckSpaceController implements Initializable, ClientMess
             }
         });
     }
+    private void showStatus(String msg, boolean error) {
+        statusLabel.setText(msg);
+        statusLabel.setStyle("-fx-text-fill: " + (error ? "#e94560" : "#00e676") + ";");
+    }
 
     @Override
-    public void onDisconnected(String reason) {}
+    public void onDisconnected(String reason) {Platform.runLater(() -> showStatus("Server is disconnected. Cannot load available space.", true));}
 }

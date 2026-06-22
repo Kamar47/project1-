@@ -37,17 +37,105 @@ public class ServerController implements Initializable {
 
     @FXML
     public void handleStart() {
+        String portStr = getText(portField);
+        String dbUrl = getText(dbUrlField);
+        String dbUser = getText(dbUserField);
+        String dbPass = getText(dbPassField);
+
+        boolean hasError = false;
+        int port = -1;
+
+        // Validate Port
+        if (portStr.isEmpty()) {
+            appendLog("ERROR: Please enter a port number.");
+            hasError = true;
+        } else {
+            try {
+                port = Integer.parseInt(portStr);
+
+                if (port <= 0 || port > 65535) {
+                    appendLog("ERROR: Port must be between 1 and 65535.");
+                    hasError = true;
+                }
+
+            } catch (NumberFormatException e) {
+                appendLog("ERROR: Port must be a valid number, for example 5555.");
+                hasError = true;
+            }
+        }
+
+        // Validate DB URL
+        if (dbUrl.isEmpty()) {
+            appendLog("ERROR: Please enter the database URL.");
+            hasError = true;
+        }
+
+        // Validate DB User
+        if (dbUser.isEmpty()) {
+            appendLog("ERROR: Please enter the database username.");
+            hasError = true;
+        }
+
+        // Validate DB Password
+        if (dbPass.isEmpty()) {
+            appendLog("ERROR: Please enter the database password.");
+            hasError = true;
+        }
+
+        // If there are validation errors, do not start the server
+        if (hasError) {
+            return;
+        }
+
         try {
-            int port = Integer.parseInt(portField.getText().trim());
             server = new BackEndServer(port);
             server.setUiController(this);
-            server.connectDB(dbUrlField.getText().trim(), dbUserField.getText().trim(), dbPassField.getText());
+
+            server.connectDB(dbUrl, dbUser, dbPass);
             appendLog("Connected to database.");
+
             server.listen();
-            startButton.setDisable(true); stopButton.setDisable(false);
-            portField.setDisable(true); dbUrlField.setDisable(true);
-            dbUserField.setDisable(true); dbPassField.setDisable(true);
-        } catch (Exception e) { appendLog("ERROR: " + e.getMessage()); }
+
+            startButton.setDisable(true);
+            stopButton.setDisable(false);
+
+            portField.setDisable(true);
+            dbUrlField.setDisable(true);
+            dbUserField.setDisable(true);
+            dbPassField.setDisable(true);
+
+        } catch (Exception e) {
+            appendLog("ERROR: " + getFriendlyErrorMessage(e));
+            server = null;
+        }
+    }
+    private String getText(TextField field) {
+        if (field == null || field.getText() == null) {
+            return "";
+        }
+        return field.getText().trim();
+    }
+
+    private String getFriendlyErrorMessage(Exception e) {
+        String msg = e.getMessage();
+
+        if (msg == null || msg.isEmpty()) {
+            return e.getClass().getSimpleName();
+        }
+
+        if (msg.contains("Access denied")) {
+            return "Database login failed. Please check the DB username and password.";
+        }
+
+        if (msg.contains("Communications link failure")) {
+            return "Cannot connect to MySQL. Please check that MySQL is running and the DB URL is correct.";
+        }
+
+        if (msg.contains("Address already in use")) {
+            return "This port is already in use. Please choose another port.";
+        }
+
+        return msg;
     }
 
     @FXML

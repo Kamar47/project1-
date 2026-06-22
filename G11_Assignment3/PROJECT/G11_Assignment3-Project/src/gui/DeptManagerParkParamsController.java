@@ -26,6 +26,10 @@ public class DeptManagerParkParamsController implements Initializable, ClientMes
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+        if (!ClientUI.isServerConnected()) {
+            showStatus("Server disconnected. Cannot load park parameters.", true);
+            return;
+        }
         currentAction = "LOAD_PARKS";
         ClientUI.client.setHandler(this);
         ClientUI.client.sendMessage(new ClientServerMessage(Command.GET_ALL_PARKS));
@@ -33,9 +37,22 @@ public class DeptManagerParkParamsController implements Initializable, ClientMes
 
     @FXML
     private void handleGetParams() {
-        if (parkCombo.getValue() == null) { statusLabel.setText("Select a park."); return; }
+        if (!ClientUI.isServerConnected()) {
+            showStatus("Server disconnected. Cannot load park details.", true);
+            return;
+        }
+        if (parkCombo.getValue() == null) {
+            showStatus("Select a park.", true);
+            return;
+        }
+        if (parks == null || parks.isEmpty()) {
+            showStatus("Park list is not loaded. Please reconnect to the server.", true);
+            return;
+        }
         Park selected = parks.stream().filter(p -> p.getParkName().equals(parkCombo.getValue())).findFirst().orElse(null);
-        if (selected == null) return;
+        if (selected == null) {
+        	showStatus("Park not found.", true);
+            return;}
         currentAction = "LOAD_DETAILS";
         ClientUI.client.setHandler(this);
         ClientUI.client.sendMessage(new ClientServerMessage(Command.GET_PARK_DETAILS, selected.getParkId()));
@@ -62,5 +79,16 @@ public class DeptManagerParkParamsController implements Initializable, ClientMes
             }
         });
     }
-    @Override public void onDisconnected(String r) { Platform.runLater(() -> statusLabel.setText(r)); }
+    private void showStatus(String msg, boolean error) {
+        statusLabel.setWrapText(true);
+        statusLabel.setMaxWidth(700);
+        statusLabel.setText(msg);
+        statusLabel.setStyle("-fx-text-fill: " + (error ? "#e94560" : "#00e676") + ";");
+    }
+    @Override
+    public void onDisconnected(String r) {
+        Platform.runLater(() -> {
+            showStatus("Server disconnected. Cannot load park parameters.", true);
+        });
+    }
 }

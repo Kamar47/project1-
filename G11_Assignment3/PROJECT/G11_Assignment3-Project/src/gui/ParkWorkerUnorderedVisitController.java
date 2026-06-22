@@ -30,17 +30,23 @@ public class ParkWorkerUnorderedVisitController implements Initializable, Client
     @FXML private Label priceLabel, statusLabel, availableWalkinLabel;
     private Park currentPark;
     private String currentAction;
-
+    
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         typeCombo.setItems(FXCollections.observableArrayList("walk_in", "walk_in_group"));
         typeCombo.setValue("walk_in");
         visitorsField.textProperty().addListener((o, ov, nv) -> updatePrice());
         typeCombo.valueProperty().addListener((o, ov, nv) -> updatePrice());
+        if (!ClientUI.isServerConnected()) {
+            showError("Server is disconnected. Cannot load park details.");
+            return;
+        }
         currentAction = "LOAD_PARK";
         ClientUI.client.setHandler(this);
         GeneralParkWorker w = WorkerLoginController.getLoggedInWorker();
-        ClientUI.client.sendMessage(new ClientServerMessage(Command.GET_PARK_DETAILS, w.getParkId()));
+        if (w != null) {
+            ClientUI.client.sendMessage(new ClientServerMessage(Command.GET_PARK_DETAILS, w.getParkId()));
+        }
     }
 
     private void updatePrice() {
@@ -54,6 +60,14 @@ public class ParkWorkerUnorderedVisitController implements Initializable, Client
 
     @FXML
     private void handleOrder() {
+    	if (!ClientUI.isServerConnected()) {
+    	    showError("Server is disconnected. Cannot create unordered visit.");
+    	    return;
+    	}
+    	if (currentPark == null) {
+    	    showError("Park details are not loaded. Please reconnect to the server.");
+    	    return;
+    	}
         String err;
         if ((err = InputValidation.validateId(travelerIdField.getText())) != null) { showError(err); return; }
         int maxV = typeCombo.getValue().equals("walk_in_group") ? 15 : 999;

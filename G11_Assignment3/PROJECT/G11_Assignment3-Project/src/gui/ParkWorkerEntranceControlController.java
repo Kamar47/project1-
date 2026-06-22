@@ -32,6 +32,10 @@ public class ParkWorkerEntranceControlController implements Initializable, Clien
 
     @FXML
     private void handleCheck() {
+    	if (!ClientUI.isServerConnected()) {
+    	    showStatus("Server is disconnected. Cannot check entrance.", true);
+    	    return;
+    	}
         String id = visitorIdField.getText().trim();
         String err = InputValidation.validateId(id);
         if (err != null) { showStatus(err, true); return; }
@@ -42,6 +46,10 @@ public class ParkWorkerEntranceControlController implements Initializable, Clien
 
     @FXML
     private void handleApproveEntry() {
+    	if (!ClientUI.isServerConnected()) {
+    	    showStatus("Server is disconnected. Cannot approve entry.", true);
+    	    return;
+    	}
         if (foundOrder == null) return;
         GeneralParkWorker w = WorkerLoginController.getLoggedInWorker();
         currentAction = "ENTRY";
@@ -64,6 +72,10 @@ public class ParkWorkerEntranceControlController implements Initializable, Clien
 
     @FXML
     private void handleExit() {
+    	if (!ClientUI.isServerConnected()) {
+    	    showExitStatus("Server is disconnected. Cannot process exit.", true);
+    	    return;
+    	}
         String id = exitIdField.getText().trim();
         String countStr = exitCountField.getText().trim();
         String err1 = InputValidation.validateId(id);

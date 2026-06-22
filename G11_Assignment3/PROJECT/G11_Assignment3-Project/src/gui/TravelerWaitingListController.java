@@ -40,6 +40,11 @@ public class TravelerWaitingListController implements Initializable, ClientMessa
 
     @FXML
     public void loadWaitlist() {
+    	if (!ClientUI.isServerConnected()) {
+            statusLabel.setText("Server is disconnected. Cannot load waiting list.");
+            statusLabel.setStyle("-fx-text-fill: #e94560;");
+            return;
+        }
         ClientUI.client.setHandler(this);
         String id = TravelerLoginController.getLoggedInTraveler().getIdNumber();
         ClientUI.client.sendMessage(new ClientServerMessage(Command.GET_ALL_ORDERS_BY_TRAVELER, id));
@@ -47,6 +52,11 @@ public class TravelerWaitingListController implements Initializable, ClientMessa
 
     @FXML
     private void handleRemove() {
+    	if (!ClientUI.isServerConnected()) {
+    	    statusLabel.setText("Server is disconnected. Cannot remove from waiting list.");
+    	    statusLabel.setStyle("-fx-text-fill: #e94560;");
+    	    return;
+    	}
         Order selected = waitlistTable.getSelectionModel().getSelectedItem();
         if (selected == null) { statusLabel.setText("Select an order first."); return; }
         ClientUI.client.setHandler(this);

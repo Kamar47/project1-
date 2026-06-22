@@ -345,6 +345,242 @@ public class DatabaseController {
         order.setOrderId(orderId); order.setConfirmationCode(code);
         return orderId;
     }
+    private String normalizeTime(String time) {
+        if (time == null) {
+            return "";
+        }
+
+        time = time.trim();
+
+        if (time.length() == 5) {
+            return time + ":00";
+        }
+
+        return time;
+    }
+    public int getWaitingVisitorsForSlot(int parkId, String date, String time) throws SQLException {
+        PreparedStatement ps = conn.prepareStatement(
+            "SELECT COALESCE(SUM(o.num_visitors), 0) AS total_waiting " +
+            "FROM waitlist w " +
+            "JOIN orders o ON w.order_id = o.order_id " +
+            "WHERE w.park_id = ? " +
+            "AND w.visit_date = ? " +
+            "AND TIME(w.visit_time) = TIME(?) " +
+            "AND w.status = 'waiting' " +
+            "AND o.status = 'waitlist'"
+        );
+
+        ps.setInt(1, parkId);
+        ps.setDate(2, Date.valueOf(date));
+        ps.setString(3, normalizeTime(time));
+
+        ResultSet rs = ps.executeQuery();
+
+        int total = 0;
+        if (rs.next()) {
+            total = rs.getInt("total_waiting");
+        }
+
+        rs.close();
+        ps.close();
+
+        return total;
+    }
+    public boolean hasActiveWaitlistForSlot(int parkId, String date, String time) throws SQLException {
+        PreparedStatement ps = conn.prepareStatement(
+            "SELECT COUNT(*) " +
+            "FROM waitlist w " +
+            "JOIN orders o ON w.order_id = o.order_id " +
+            "WHERE w.park_id = ? " +
+            "AND w.visit_date = ? " +
+            "AND TIME(w.visit_time) = TIME(?) " +
+            "AND w.status = 'waiting' " +
+            "AND o.status = 'waitlist'"
+        );
+
+        ps.setInt(1, parkId);
+        ps.setDate(2, Date.valueOf(date));
+        ps.setString(3, normalizeTime(time));
+
+        ResultSet rs = ps.executeQuery();
+
+        boolean exists = rs.next() && rs.getInt(1) > 0;
+
+        rs.close();
+        ps.close();
+
+        return exists;
+    }
+    public int expireOldWaitlistOffers() throws SQLException {
+        PreparedStatement ps = conn.prepareStatement(
+            "UPDATE orders o " +
+            "JOIN waitlist w ON o.order_id = w.order_id " +
+            "SET o.status = 'expired', w.status = 'expired' " +
+            "WHERE o.status = 'pending' " +
+            "AND w.status = 'notified' " +
+            "AND w.expires_at IS NOT NULL " +
+            "AND w.expires_at <= NOW()"
+        );
+
+        int rows = ps.executeUpdate();
+        ps.close();
+
+        return rows;
+    }
+    public int promoteNextWaitlistForSlot(int parkId, String date, String time) throws SQLException {
+        int promoted = 0;
+        String normalizedTime = normalizeTime(time);
+
+        while (true) {
+            int available = checkAvailability(parkId, date, normalizedTime);
+
+            PreparedStatement ps = conn.prepareStatement(
+                "SELECT w.waitlist_id, o.order_id, o.num_visitors " +
+                "FROM waitlist w " +
+                "JOIN orders o ON w.order_id = o.order_id " +
+                "WHERE w.park_id = ? " +
+                "AND w.visit_date = ? " +
+                "AND TIME(w.visit_time) = TIME(?) " +
+                "AND w.status = 'waiting' " +
+                "AND o.status = 'waitlist' " +
+                "ORDER BY w.position ASC " +
+                "LIMIT 1"
+            );
+
+            ps.setInt(1, parkId);
+            ps.setDate(2, Date.valueOf(date));
+            ps.setString(3, normalizedTime);
+
+            ResultSet rs = ps.executeQuery();
+
+            if (!rs.next()) {
+                rs.close();
+                ps.close();
+                break;
+            }
+
+            int waitlistId = rs.getInt("waitlist_id");
+            int orderId = rs.getInt("order_id");
+            int numVisitors = rs.getInt("num_visitors");
+
+            rs.close();
+            ps.close();
+
+            if (available < numVisitors) {
+                break;
+            }
+
+            PreparedStatement updateOrder = conn.prepareStatement(
+                "UPDATE orders SET status = 'pending' WHERE order_id = ? AND status = 'waitlist'"
+            );
+            updateOrder.setInt(1, orderId);
+            updateOrder.executeUpdate();
+            updateOrder.close();
+
+            PreparedStatement updateWaitlist = conn.prepareStatement(
+                "UPDATE waitlist " +
+                "SET status = 'notified', notified_at = NOW(), expires_at = DATE_ADD(NOW(), INTERVAL 1 HOUR) " +
+                "WHERE waitlist_id = ? AND status = 'waiting'"
+            );
+            updateWaitlist.setInt(1, waitlistId);
+            updateWaitlist.executeUpdate();
+            updateWaitlist.close();
+
+            promoted++;
+        }
+
+        return promoted;
+    }
+    public int processWaitingLists() throws SQLException {
+        int promoted = 0;
+
+        PreparedStatement ps = conn.prepareStatement(
+            "SELECT DISTINCT w.park_id, w.visit_date, w.visit_time " +
+            "FROM waitlist w " +
+            "JOIN orders o ON w.order_id = o.order_id " +
+            "WHERE w.status = 'waiting' " +
+            "AND o.status = 'waitlist' " +
+            "AND w.visit_date >= CURDATE()"
+        );
+
+        ResultSet rs = ps.executeQuery();
+
+        while (rs.next()) {
+            promoted += promoteNextWaitlistForSlot(
+                rs.getInt("park_id"),
+                rs.getDate("visit_date").toString(),
+                rs.getString("visit_time")
+            );
+        }
+
+        rs.close();
+        ps.close();
+
+        return promoted;
+    }
+    public int cancelOrderAndProcessWaitlist(int orderId) throws SQLException {
+        PreparedStatement getOrder = conn.prepareStatement(
+            "SELECT park_id, visit_date, visit_time FROM orders WHERE order_id = ?"
+        );
+
+        getOrder.setInt(1, orderId);
+        ResultSet rs = getOrder.executeQuery();
+
+        if (!rs.next()) {
+            rs.close();
+            getOrder.close();
+            return 0;
+        }
+
+        int parkId = rs.getInt("park_id");
+        String date = rs.getDate("visit_date").toString();
+        String time = rs.getString("visit_time");
+
+        rs.close();
+        getOrder.close();
+
+        updateOrderStatus(orderId, "cancelled");
+
+        PreparedStatement updateWaitlist = conn.prepareStatement(
+            "UPDATE waitlist " +
+            "SET status = 'cancelled' " +
+            "WHERE order_id = ? " +
+            "AND status IN ('waiting', 'notified')"
+        );
+        updateWaitlist.setInt(1, orderId);
+        updateWaitlist.executeUpdate();
+        updateWaitlist.close();
+
+        return promoteNextWaitlistForSlot(parkId, date, time);
+    }
+    public boolean confirmWaitlistOffer(int orderId) throws SQLException {
+        PreparedStatement ps = conn.prepareStatement(
+            "UPDATE orders o " +
+            "JOIN waitlist w ON o.order_id = w.order_id " +
+            "SET o.status = 'confirmed', w.status = 'confirmed' " +
+            "WHERE o.order_id = ? " +
+            "AND o.status = 'pending' " +
+            "AND w.status = 'notified'"
+        );
+
+        ps.setInt(1, orderId);
+        int rows = ps.executeUpdate();
+        ps.close();
+
+        return rows > 0;
+    }
+    public void cancelWaitlistRecord(int orderId) throws SQLException {
+        PreparedStatement ps = conn.prepareStatement(
+            "UPDATE waitlist " +
+            "SET status = 'cancelled' " +
+            "WHERE order_id = ? " +
+            "AND status IN ('waiting', 'notified')"
+        );
+
+        ps.setInt(1, orderId);
+        ps.executeUpdate();
+        ps.close();
+    }
     // === PARAMETER REQUESTS ===
     public void createParameterRequest(int parkId, String paramName, double oldVal, double newVal, int requestedBy) throws SQLException {
         PreparedStatement ps = conn.prepareStatement(

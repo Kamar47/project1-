@@ -119,7 +119,7 @@ CREATE TABLE waitlist (
     visit_date DATE NOT NULL,
     visit_time TIME NOT NULL,
     position INT NOT NULL,                        -- מיקום בתור
-    status ENUM('waiting', 'notified', 'confirmed', 'expired') NOT NULL DEFAULT 'waiting',
+    status ENUM('waiting', 'notified', 'confirmed', 'expired', 'cancelled') NOT NULL DEFAULT 'waiting',
     notified_at DATETIME,                         -- מתי נשלחה הודעה
     expires_at DATETIME,                          -- ההזמנה נשמרת למזמין שעה
     FOREIGN KEY (order_id) REFERENCES orders(order_id),

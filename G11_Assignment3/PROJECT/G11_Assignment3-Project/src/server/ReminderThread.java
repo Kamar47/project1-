@@ -99,37 +99,16 @@ public class ReminderThread extends Thread {
     }
 
     private void processWaitlist() throws SQLException {
-        // Check if any waitlisted orders can be fulfilled due to cancellations
-        Connection conn = DB.MySqlConnector.getInstance().getConnection();
-        PreparedStatement ps = conn.prepareStatement(
-            "SELECT w.*, o.num_visitors, o.email, o.phone FROM waitlist w " +
-            "JOIN orders o ON w.order_id = o.order_id " +
-            "WHERE w.status = 'waiting' AND w.visit_date >= CURDATE() ORDER BY w.position ASC");
-        ResultSet rs = ps.executeQuery();
-        while (rs.next()) {
-            int parkId = rs.getInt("park_id");
-            String date = rs.getDate("visit_date").toString();
-            String time = rs.getString("visit_time");
-            int numVisitors = rs.getInt("num_visitors");
-            int available = db.checkAvailability(parkId, date, time);
-            if (available >= numVisitors) {
-                int orderId = rs.getInt("order_id");
-                int waitlistId = rs.getInt("waitlist_id");
-                // Confirm the order
-                PreparedStatement up1 = conn.prepareStatement("UPDATE orders SET status = 'confirmed' WHERE order_id = ?");
-                up1.setInt(1, orderId); up1.executeUpdate(); up1.close();
-                // Update waitlist
-                PreparedStatement up2 = conn.prepareStatement("UPDATE waitlist SET status = 'notified', notified_at = NOW(), expires_at = DATE_ADD(NOW(), INTERVAL 1 HOUR) WHERE waitlist_id = ?");
-                up2.setInt(1, waitlistId); up2.executeUpdate(); up2.close();
-                // Log notification
-                PreparedStatement notif = conn.prepareStatement(
-                    "INSERT INTO notifications (order_id, recipient_email, recipient_phone, notification_type, message_text) " +
-                    "VALUES (?, ?, ?, 'waitlist_available', 'Spot available - confirm within 1 hour')");
-                notif.setInt(1, orderId); notif.setString(2, rs.getString("email")); notif.setString(3, rs.getString("phone"));
-                notif.executeUpdate(); notif.close();
-                server.log("[Waitlist] Spot opened for order #" + orderId);
-            }
+        int expired = db.expireOldWaitlistOffers();
+
+        if (expired > 0) {
+            server.log("[Waitlist] Expired " + expired + " pending waitlist offer(s).");
         }
-        rs.close(); ps.close();
+
+        int promoted = db.processWaitingLists();
+
+        if (promoted > 0) {
+            server.log("[Waitlist] Promoted " + promoted + " waitlist order(s) to pending.");
+        }
     }
 }

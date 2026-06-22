@@ -4,6 +4,7 @@ import client.*;
 import common.*;
 import common.worker.GeneralParkWorker;
 import javafx.fxml.*;
+import javafx.scene.Parent;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
@@ -39,15 +40,26 @@ public class ParkManagerFrameController implements Initializable {
     @FXML private void showPromotions() { loadPage("ParkManagerPromotions.fxml"); }
     @FXML private void handleLogout() {
         GeneralParkWorker w = WorkerLoginController.getLoggedInWorker();
-        if (w != null) {
+
+        if (w != null && ClientUI.isServerConnected()) {
             ClientUI.client.sendMessage(new ClientServerMessage(Command.WORKER_LOGOUT, w.getEmployeeId()));
             try { Thread.sleep(500); } catch (InterruptedException ex) {}
         }
+
         mainBorderPane.getScene().getWindow().hide();
     }
 
     private void loadPage(String fxml) {
-        try { NavigationManager.openPageInCenter(mainBorderPane, fxml); }
-        catch (Exception e) { e.printStackTrace(); }
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxml));
+            Parent page = loader.load();
+            mainBorderPane.setCenter(page);
+        } catch (Exception e) {
+            e.printStackTrace();
+
+            Label error = new Label("Server disconnected. Page actions are unavailable.");
+            error.setStyle("-fx-text-fill: #e94560; -fx-font-size: 18px;");
+            mainBorderPane.setCenter(error);
+        }
     }
 }

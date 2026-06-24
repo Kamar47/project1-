@@ -87,13 +87,17 @@ public class ReminderThread extends Thread {
         int count = 0;
         while (rs.next()) {
             int orderId = rs.getInt("order_id");
+            String email = rs.getString("email");
+            String code = rs.getString("confirmation_code") != null ? rs.getString("confirmation_code") : "#" + orderId;
             PreparedStatement up = conn.prepareStatement("UPDATE orders SET status = 'expired' WHERE order_id = ?");
             up.setInt(1, orderId); up.executeUpdate(); up.close();
-            // Log
+            // Notify visitor - created once per order (status change prevents re-entry)
             PreparedStatement notif = conn.prepareStatement(
                 "INSERT INTO notifications (order_id, recipient_email, notification_type, message_text) " +
-                "VALUES (?, ?, 'reminder_expired', 'Order auto-cancelled - reminder not confirmed')");
-            notif.setInt(1, orderId); notif.setString(2, rs.getString("email"));
+                "VALUES (?, ?, 'reminder_expired', ?)");
+            notif.setInt(1, orderId);
+            notif.setString(2, email);
+            notif.setString(3, "Your visit booking " + code + " was automatically cancelled because you did not confirm the reminder within 2 hours.");
             notif.executeUpdate(); notif.close();
             count++;
         }

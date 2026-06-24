@@ -42,7 +42,7 @@ public class GoNatureClient extends AbstractClient {
                 if (first.size() == 9 && first.get(0) instanceof String) {
                     // Check field 2 is notification_type (reminder or waitlist_available)
                     String type = (String) first.get(2);
-                    if ("reminder".equals(type) || "waitlist_available".equals(type)) {
+                    if ("reminder".equals(type) || "waitlist_available".equals(type) || "reminder_expired".equals(type)) {
                         isNotificationResponse = true;
                     }
                 }

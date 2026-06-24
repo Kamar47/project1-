@@ -31,6 +31,7 @@ public class NotificationPopupController {
     @FXML private HBox timerBox;
     @FXML private Label timerLabel;
     @FXML private Button confirmBtn;
+    @FXML private Button laterBtn;
 
     private int orderId;
     private int notificationId;
@@ -54,7 +55,18 @@ public class NotificationPopupController {
         timeLabel.setText(time);
         visitorsLabel.setText(visitors + " visitors");
 
-        if ("reminder".equals(notificationType)) {
+        if ("reminder_expired".equals(notificationType)) {
+            iconLabel.setText("❌");
+            iconLabel.setStyle("-fx-font-size: 26px; -fx-min-width: 48; -fx-min-height: 48; -fx-alignment: center; -fx-background-color: #2a0a0a; -fx-background-radius: 50;");
+            titleLabel.setText("Visit cancelled");
+            String msg = row.get(3);
+            subtitleLabel.setText(msg != null && !msg.isEmpty() ? msg : "Your visit was automatically cancelled because you did not confirm the reminder within 2 hours.");
+            timerBox.setVisible(false);
+            timerBox.setManaged(false);
+            confirmBtn.setText("OK");
+            confirmBtn.setStyle("-fx-background-color: #ef4444; -fx-text-fill: white; -fx-background-radius: 10; -fx-font-size: 14px; -fx-font-weight: bold; -fx-cursor: hand;");
+            if (laterBtn != null) { laterBtn.setVisible(false); laterBtn.setManaged(false); }
+        } else if ("reminder".equals(notificationType)) {
             iconLabel.setText("🔔");
             iconLabel.setStyle("-fx-font-size: 26px; -fx-min-width: 48; -fx-min-height: 48; -fx-alignment: center; -fx-background-color: #1e1b3a; -fx-background-radius: 50;");
             titleLabel.setText("Visit reminder");
@@ -77,9 +89,11 @@ public class NotificationPopupController {
     @FXML
     private void handleConfirm() {
         markAsRead();
-        ClientUI.client.sendMessage(new ClientServerMessage(Command.CONFIRM_ORDER, orderId));
+        // For reminder_expired: just acknowledge (no confirm needed — order already expired)
+        if (!"reminder_expired".equals(notificationType)) {
+            ClientUI.client.sendMessage(new ClientServerMessage(Command.CONFIRM_ORDER, orderId));
+        }
         closePopup();
-        // Refresh My Orders if it's currently open so label updates immediately
         TravelerOrdersController.refreshIfVisible();
     }
 

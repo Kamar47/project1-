@@ -1031,9 +1031,9 @@ public class DatabaseController {
             "JOIN orders o ON n.order_id = o.order_id " +
             "JOIN parks p ON o.park_id = p.park_id " +
             "WHERE o.visitor_id = ? " +
-            "AND n.notification_type IN ('reminder','waitlist_available') " +
+            "AND n.notification_type IN ('reminder','waitlist_available','reminder_expired') " +
             "AND n.is_read = FALSE " +
-            "AND o.status NOT IN ('cancelled','expired','completed') " +
+            "AND (o.status NOT IN ('cancelled','completed') OR n.notification_type = 'reminder_expired') " +
             "ORDER BY n.sent_at ASC");
         ps.setString(1, visitorId);
         ResultSet rs = ps.executeQuery();

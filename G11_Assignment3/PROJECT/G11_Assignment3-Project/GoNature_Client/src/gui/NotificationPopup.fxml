@@ -60,7 +60,7 @@
         <Button fx:id="confirmBtn" text="✓  Confirm" onAction="#handleConfirm" prefWidth="170" prefHeight="42"
                 style="-fx-background-color: #10b981; -fx-text-fill: white; -fx-background-radius: 10;
                        -fx-font-size: 14px; -fx-font-weight: bold; -fx-cursor: hand;"/>
-        <Button text="Later" onAction="#handleLater" prefWidth="130" prefHeight="42"
+        <Button fx:id="laterBtn" text="Later" onAction="#handleLater" prefWidth="130" prefHeight="42"
                 style="-fx-background-color: #252538; -fx-text-fill: #94a3b8; -fx-background-radius: 10;
                        -fx-border-color: #34344f; -fx-border-width: 1; -fx-border-radius: 10;
                        -fx-font-size: 14px; -fx-cursor: hand;"/>

@@ -4,7 +4,8 @@
 -- Group 11
 -- ================================================================
 
-CREATE DATABASE IF NOT EXISTS gonature;
+DROP DATABASE IF EXISTS gonature;
+CREATE DATABASE gonature;
 USE gonature;
 
 -- ================================================================

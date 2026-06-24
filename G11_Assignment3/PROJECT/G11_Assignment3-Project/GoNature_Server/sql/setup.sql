@@ -4,6 +4,7 @@
 -- Group 11
 -- ================================================================
 
+DROP DATABASE IF EXISTS gonature;
 CREATE DATABASE IF NOT EXISTS gonature;
 USE gonature;
 
@@ -89,7 +90,7 @@ CREATE TABLE orders (
     status ENUM(
         'pending',                                -- ממתין לאישור
         'confirmed',                              -- אושר
-        'waitlist',                                -- ברשימת המתנה
+        'waitlist',                               -- ברשימת המתנה
         'cancelled',                              -- בוטל
         'in_park',                                -- נמצא כעת בפארק (entered, not yet exited)
         'completed',                              -- בוצע - השלים ביקור (entered and exited)
@@ -196,7 +197,7 @@ CREATE TABLE notifications (
         'booking_cancellation',                   -- ביטול הזמנה
         'reminder',                               -- תזכורת יום לפני
         'reminder_expired',                       -- הזמנה בוטלה - לא אישר תזכורת
-        'waitlist_available',                      -- התפנה מקום
+        'waitlist_available',                     -- התפנה מקום
         'waitlist_expired'                        -- פג תוקף המתנה
     ) NOT NULL,
     message_text TEXT,
@@ -239,43 +240,39 @@ INSERT INTO parks (park_name, max_visitors, gap_for_walkins, estimated_visit_dur
 ('Ein Gedi Nature Reserve', 400, 40, 4.0, 50.0),
 ('Masada National Park', 600, 60, 4.0, 50.0);
 
--- Department Manager (no park)
+-- Employees
 INSERT INTO employees VALUES
-(1001, 'David', 'Cohen', 'david.cohen@gonature.com', 'department_manager', NULL, 'david_dm', 'password123', FALSE);
+(1001, 'David', 'Cohen',   'david.cohen@gonature.com', 'department_manager', NULL, 'david_dm',  'password123', FALSE),
+(2001, 'Sarah', 'Levi',    'sarah.levi@gonature.com',  'park_manager',       1,    'sarah_pm1', 'password123', FALSE),
+(2002, 'Moshe', 'Ben-Ari', 'moshe.ba@gonature.com',    'park_manager',       2,    'moshe_pm2', 'password123', FALSE),
+(2003, 'Yael',  'Shapira', 'yael.s@gonature.com',      'park_manager',       3,    'yael_pm3',  'password123', FALSE),
+(3001, 'Avi',   'Katz',    'avi.k@gonature.com',       'park_worker',        1,    'avi_pw1',   'password123', FALSE),
+(3002, 'Dana',  'Mizrahi', 'dana.m@gonature.com',      'park_worker',        2,    'dana_pw2',  'password123', FALSE),
+(3003, 'Ron',   'Peretz',  'ron.p@gonature.com',       'park_worker',        3,    'ron_pw3',   'password123', FALSE),
+(4001, 'Noa',   'Goldberg','noa.g@gonature.com',       'service_rep',        NULL, 'noa_sr',    'password123', FALSE);
 
--- Park Managers
-INSERT INTO employees VALUES
-(2001, 'Sarah', 'Levi', 'sarah.levi@gonature.com', 'park_manager', 1, 'sarah_pm1', 'password123', FALSE),
-(2002, 'Moshe', 'Ben-Ari', 'moshe.ba@gonature.com', 'park_manager', 2, 'moshe_pm2', 'password123', FALSE),
-(2003, 'Yael', 'Shapira', 'yael.s@gonature.com', 'park_manager', 3, 'yael_pm3', 'password123', FALSE);
-
--- Park Workers
-INSERT INTO employees VALUES
-(3001, 'Avi', 'Katz', 'avi.k@gonature.com', 'park_worker', 1, 'avi_pw1', 'password123', FALSE),
-(3002, 'Dana', 'Mizrahi', 'dana.m@gonature.com', 'park_worker', 2, 'dana_pw2', 'password123', FALSE),
-(3003, 'Ron', 'Peretz', 'ron.p@gonature.com', 'park_worker', 3, 'ron_pw3', 'password123', FALSE);
-
--- Service Representatives (HQ)
-INSERT INTO employees VALUES
-(4001, 'Noa', 'Goldberg', 'noa.g@gonature.com', 'service_rep', NULL, 'noa_sr', 'password123', FALSE);
-
--- Subscribers (Family club members)
+-- Subscribers
 INSERT INTO subscribers (id_number, first_name, last_name, phone, email, family_members, credit_card) VALUES
-('123456789', 'Eli', 'Avraham', '050-1234567', 'eli.a@gmail.com', 4, '4580-1234-5678-9012'),
-('234567890', 'Tamar', 'Friedman', '052-2345678', 'tamar.f@gmail.com', 3, NULL),
-('345678901', 'Oren', 'Dayan', '054-3456789', 'oren.d@gmail.com', 5, '4580-9876-5432-1098');
+('123456789', 'Eli',      'Avraham',  '050-1234567', 'eli.a@gmail.com',    4, '4580-1234-5678-9012'),
+('234567890', 'Tamar',    'Friedman', '052-2345678', 'tamar.f@gmail.com',  3, NULL),
+('345678901', 'Oren',     'Dayan',    '054-3456789', 'oren.d@gmail.com',   5, '4580-9876-5432-1098'),
+('325478717', 'Mhmod',    'Test',     '050-3254787', 'mhmod@test.com',     3, '4580-1111-2222-3333'),
+('214077323', 'Mohammed', 'Test',     '052-2140773', 'mohammed@test.com',  4, NULL),
+('213470353', 'Ebrahim',  'Test',     '054-2134703', 'ebrahim@test.com',   2, '4580-4444-5555-6666'),
+('327875969', 'Kamar',    'Test',     '050-3278759', 'kamar@test.com',     5, NULL),
+('214674814', 'Hadi',     'Test',     '052-2146748', 'hadi@test.com',      3, '4580-7777-8888-9999');
 
 -- Guides
 INSERT INTO guides (id_number, first_name, last_name, email, phone) VALUES
-('111222333', 'Amir', 'Yosef', 'amir.y@guides.com', '050-1112223'),
+('111222333', 'Amir', 'Yosef',  'amir.y@guides.com', '050-1112223'),
 ('222333444', 'Liat', 'Baruch', 'liat.b@guides.com', '052-2223334');
 
 -- Sample Orders
 INSERT INTO orders (visitor_id, park_id, visit_date, visit_time, num_visitors, email, phone, order_type, status, confirmation_code) VALUES
-('123456789', 1, '2026-06-01', '09:00:00', 4, 'eli.a@gmail.com', '050-1234567', 'family', 'confirmed', 'CONF-10001'),
-('234567890', 2, '2026-06-01', '10:00:00', 3, 'tamar.f@gmail.com', '052-2345678', 'individual', 'confirmed', 'CONF-10002'),
-('111222333', 1, '2026-06-02', '08:30:00', 12, 'amir.y@guides.com', '050-1112223', 'organized_group', 'confirmed', 'CONF-10003'),
-('999888777', 3, '2026-06-03', '11:00:00', 2, 'tourist@gmail.com', '053-9998887', 'individual', 'pending', NULL);
+('123456789', 1, '2026-06-01', '09:00:00', 4,  'eli.a@gmail.com',    '050-1234567', 'family',          'confirmed', 'CONF-10001'),
+('234567890', 2, '2026-06-01', '10:00:00', 3,  'tamar.f@gmail.com',  '052-2345678', 'individual',      'confirmed', 'CONF-10002'),
+('111222333', 1, '2026-06-02', '08:30:00', 12, 'amir.y@guides.com',  '050-1112223', 'organized_group', 'confirmed', 'CONF-10003'),
+('999888777', 3, '2026-06-03', '11:00:00', 2,  'tourist@gmail.com',  '053-9998887', 'individual',      'pending',   NULL);
 
 
 -- ================================================================
@@ -288,10 +285,9 @@ INSERT INTO orders (visitor_id, park_id, visit_date, visit_time, num_visitors, e
 -- 5. Subscriber rate:                  Extra 10% discount on top of other discounts.
 -- Promotions:                          Additional discount set by park manager (needs dept manager approval).
 
-
 SELECT 'GoNature database created successfully!' AS status;
-SELECT CONCAT(COUNT(*), ' parks') AS parks FROM parks;
-SELECT CONCAT(COUNT(*), ' employees') AS employees FROM employees;
+SELECT CONCAT(COUNT(*), ' parks')       AS parks       FROM parks;
+SELECT CONCAT(COUNT(*), ' employees')   AS employees   FROM employees;
 SELECT CONCAT(COUNT(*), ' subscribers') AS subscribers FROM subscribers;
-SELECT CONCAT(COUNT(*), ' guides') AS guides FROM guides;
-SELECT CONCAT(COUNT(*), ' orders') AS orders FROM orders;
+SELECT CONCAT(COUNT(*), ' guides')      AS guides      FROM guides;
+SELECT CONCAT(COUNT(*), ' orders')      AS orders      FROM orders;

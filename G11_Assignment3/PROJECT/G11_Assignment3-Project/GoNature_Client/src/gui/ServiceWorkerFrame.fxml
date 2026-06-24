@@ -13,6 +13,8 @@
                     style="-fx-background-color: #252538; -fx-text-fill: #e2e8f0; -fx-background-radius: 10; -fx-padding: 11 0; -fx-cursor: hand; -fx-font-size: 13px;"/>
             <Button text="Register Subscriber" onAction="#showRegisterSubscriber" prefWidth="150" wrapText="true"
                     style="-fx-background-color: #252538; -fx-text-fill: #e2e8f0; -fx-background-radius: 10; -fx-padding: 11 0; -fx-cursor: hand; -fx-font-size: 13px;"/>
+            <Button text="Lookup User" onAction="#showLookupUser" prefWidth="150" wrapText="true"
+                    style="-fx-background-color: #252538; -fx-text-fill: #e2e8f0; -fx-background-radius: 10; -fx-padding: 11 0; -fx-cursor: hand; -fx-font-size: 13px;"/>
             <Button text="Register Existing As Guide" onAction="#showRegisterExisting" prefWidth="150" wrapText="true"
                     style="-fx-background-color: #252538; -fx-text-fill: #e2e8f0; -fx-background-radius: 10; -fx-padding: 11 0; -fx-cursor: hand; -fx-font-size: 13px;"/>
             <VBox VBox.vgrow="ALWAYS"/>

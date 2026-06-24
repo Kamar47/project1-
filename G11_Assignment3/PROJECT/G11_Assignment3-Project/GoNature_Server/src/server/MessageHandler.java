@@ -447,6 +447,31 @@ public class MessageHandler {
                     respond(client, Command.DATA_RESPONSE, db.getParameterRequestsByPark(reqParkId));
                     break;
 
+                case LOOKUP_SUBSCRIBER: {
+                    String lookupId = (String) msg.getData();
+                    // Search subscribers first
+                    Subscriber lookupResult = db.getSubscriberByIdNumber(lookupId);
+                    if (lookupResult != null) {
+                        respond(client, Command.SUCCESS, lookupResult);
+                    } else {
+                        // Try employees (by employee_id)
+                        GeneralParkWorker lookupWorker = db.getEmployeeById(lookupId);
+                        if (lookupWorker != null) {
+                            respond(client, Command.SUCCESS, lookupWorker);
+                        } else {
+                            respond(client, Command.FAILURE, "No subscriber or employee found with this ID.");
+                        }
+                    }
+                    break;
+                }
+
+                case UPDATE_SUBSCRIBER_PROFILE: {
+                    java.util.ArrayList<Object> pd = msg.getDataAsArrayList();
+                    db.updateSubscriberProfile((String)pd.get(0), (String)pd.get(1), (String)pd.get(2), (String)pd.get(3));
+                    respond(client, Command.SUCCESS, "Profile updated");
+                    break;
+                }
+
                 default:
                     respond(client, Command.ERROR, "Unknown command: " + msg.getCommand());
                     break;

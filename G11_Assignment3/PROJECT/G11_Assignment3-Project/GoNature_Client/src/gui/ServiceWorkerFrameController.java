@@ -37,6 +37,7 @@ public class ServiceWorkerFrameController implements Initializable {
     @FXML private void showRegisterGuide() { loadPage("RegisterGuide.fxml"); }
     @FXML private void showRegisterSubscriber() { loadPage("RegisterSubscriber.fxml"); }
     @FXML private void showRegisterExisting() { loadPage("RegisterExistingAsGuide.fxml"); }
+    @FXML private void showLookupUser()       { loadPage("LookupUser.fxml"); }
     @FXML private void handleLogout() {
         GeneralParkWorker w = WorkerLoginController.getLoggedInWorker();
         if (w != null) {

@@ -13,6 +13,8 @@ import javafx.scene.control.TextField;
 public class RegisterSubscriberController implements ClientMessageHandler {
     @FXML private TextField idField, firstNameField, lastNameField, phoneField, emailField, familyField, creditCardField;
     @FXML private Label statusLabel;
+    private String pendingAction = "REGISTER";
+
 
     @FXML
     private void handleRegister() {
@@ -44,10 +46,10 @@ public class RegisterSubscriberController implements ClientMessageHandler {
     public void handleMessage(ClientServerMessage msg) {
         Platform.runLater(() -> {
             if (msg.getCommand() == Command.SUCCESS) {
-                Subscriber s = (Subscriber) msg.getData();
-                statusLabel.setText("Subscriber registered! ID: " + s.getSubscriberId());
-                statusLabel.setStyle("-fx-text-fill: #00e676;");
-            } else { statusLabel.setText("Error: " + msg.getData()); statusLabel.setStyle("-fx-text-fill: #e94560;"); }
+                    Subscriber s = (Subscriber) msg.getData();
+                    statusLabel.setText("Subscriber registered! ID: " + s.getSubscriberId());
+                    statusLabel.setStyle("-fx-text-fill: #00e676;");
+                } else { statusLabel.setText("Error: " + msg.getData()); statusLabel.setStyle("-fx-text-fill: #e94560;"); }
         });
     }
     @Override public void onDisconnected(String r) { Platform.runLater(() -> statusLabel.setText(r)); }

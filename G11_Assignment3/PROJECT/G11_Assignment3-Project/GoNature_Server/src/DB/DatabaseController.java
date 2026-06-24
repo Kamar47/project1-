@@ -1156,4 +1156,31 @@ public class DatabaseController {
         return count;
     }
 
+    public GeneralParkWorker getEmployeeById(String employeeId) throws SQLException {
+        try {
+            int empId = Integer.parseInt(employeeId);
+            PreparedStatement ps = conn.prepareStatement(
+                "SELECT * FROM employees WHERE employee_id = ?");
+            ps.setInt(1, empId);
+            ResultSet rs = ps.executeQuery();
+            GeneralParkWorker w = null;
+            if (rs.next()) w = extractWorker(rs);
+            rs.close(); ps.close();
+            return w;
+        } catch (NumberFormatException e) {
+            return null; // not a numeric employee ID
+        }
+    }
+
+    public void updateSubscriberProfile(String idNumber, String firstName, String lastName, String email) throws SQLException {
+        PreparedStatement ps = conn.prepareStatement(
+            "UPDATE subscribers SET first_name=?, last_name=?, email=? WHERE id_number=?");
+        ps.setString(1, firstName);
+        ps.setString(2, lastName);
+        ps.setString(3, email);
+        ps.setString(4, idNumber);
+        ps.executeUpdate();
+        ps.close();
+    }
+
 }

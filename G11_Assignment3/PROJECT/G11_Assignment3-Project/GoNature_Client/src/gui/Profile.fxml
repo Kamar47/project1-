@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<VBox alignment="TOP_CENTER" spacing="18" xmlns:fx="http://javafx.com/fxml" fx:controller="gui.ProfileController"
-      style="-fx-padding: 25; -fx-background-color: #12121f;">
+<ScrollPane fitToWidth="true" xmlns:fx="http://javafx.com/fxml" fx:controller="gui.ProfileController"
+            style="-fx-background: #12121f; -fx-background-color: #12121f;">
+<VBox alignment="TOP_CENTER" spacing="18" style="-fx-padding: 25; -fx-background-color: #12121f;">
     <Label text="Profile" style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #34d399;"/>
     <Label text="Your account information" style="-fx-text-fill: #94a3b8; -fx-font-size: 13px;"/>
 
@@ -32,4 +33,28 @@
             <Label fx:id="subscriberLabel" style="-fx-text-fill: #f1f5f9; -fx-font-size: 14px;"/>
         </HBox>
     </VBox>
+
+    <VBox spacing="12" maxWidth="420"
+          style="-fx-background-color: #1c1c2e; -fx-padding: 22; -fx-background-radius: 14; -fx-border-color: #34344f; -fx-border-radius: 14; -fx-border-width: 1;">
+        <Label text="Edit Profile" style="-fx-text-fill: #34d399; -fx-font-size: 13px; -fx-font-weight: bold;"/>
+        <VBox spacing="4">
+            <Label text="First Name" style="-fx-text-fill: #94a3b8; -fx-font-size: 12px;"/>
+            <TextField fx:id="editFirstNameField" promptText="First name" maxWidth="Infinity"
+                       style="-fx-background-color: #252538; -fx-text-fill: #f1f5f9; -fx-prompt-text-fill: #64748b; -fx-border-color: #34344f; -fx-border-radius: 8; -fx-background-radius: 8; -fx-border-width: 1.5; -fx-padding: 9;"/>
+        </VBox>
+        <VBox spacing="4">
+            <Label text="Last Name" style="-fx-text-fill: #94a3b8; -fx-font-size: 12px;"/>
+            <TextField fx:id="editLastNameField" promptText="Last name" maxWidth="Infinity"
+                       style="-fx-background-color: #252538; -fx-text-fill: #f1f5f9; -fx-prompt-text-fill: #64748b; -fx-border-color: #34344f; -fx-border-radius: 8; -fx-background-radius: 8; -fx-border-width: 1.5; -fx-padding: 9;"/>
+        </VBox>
+        <VBox spacing="4">
+            <Label text="Email" style="-fx-text-fill: #94a3b8; -fx-font-size: 12px;"/>
+            <TextField fx:id="editEmailField" promptText="name@example.com" maxWidth="Infinity"
+                       style="-fx-background-color: #252538; -fx-text-fill: #f1f5f9; -fx-prompt-text-fill: #64748b; -fx-border-color: #34344f; -fx-border-radius: 8; -fx-background-radius: 8; -fx-border-width: 1.5; -fx-padding: 9;"/>
+        </VBox>
+        <Button fx:id="saveProfileBtn" text="Save Changes" onAction="#handleSaveProfile" maxWidth="Infinity"
+                style="-fx-background-color: #10b981; -fx-text-fill: white; -fx-background-radius: 8; -fx-padding: 10 0; -fx-font-weight: bold; -fx-cursor: hand;"/>
+        <Label fx:id="statusLabel" text="" style="-fx-font-size: 12px;"/>
+    </VBox>
 </VBox>
+</ScrollPane>

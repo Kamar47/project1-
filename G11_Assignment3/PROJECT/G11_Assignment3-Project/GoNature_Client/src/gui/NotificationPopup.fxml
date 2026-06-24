@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.geometry.Insets?>
+<VBox xmlns:fx="http://javafx.com/fxml" fx:controller="gui.NotificationPopupController"
+      alignment="TOP_CENTER" spacing="0"
+      style="-fx-background-color: #12121f; -fx-min-width: 400; -fx-max-width: 400; -fx-padding: 0;">
+
+    <!-- Header -->
+    <HBox alignment="CENTER_LEFT" spacing="14"
+          style="-fx-padding: 22 24 18 24; -fx-background-color: #1c1c2e; -fx-border-color: #2a2a3e; -fx-border-width: 0 0 1 0;">
+        <Label fx:id="iconLabel" text="🔔"
+               style="-fx-font-size: 28px; -fx-min-width: 48; -fx-min-height: 48; -fx-alignment: center;
+                      -fx-background-color: #252538; -fx-background-radius: 50;"/>
+        <VBox spacing="3">
+            <Label fx:id="titleLabel" text="Notification"
+                   style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #f1f5f9;"/>
+            <Label fx:id="subtitleLabel" text=""
+                   style="-fx-font-size: 12px; -fx-text-fill: #94a3b8;" wrapText="true"/>
+        </VBox>
+    </HBox>
+
+    <!-- Info Card -->
+    <VBox spacing="10" style="-fx-padding: 20 24; -fx-background-color: #12121f;">
+        <VBox spacing="10" style="-fx-background-color: #1c1c2e; -fx-padding: 16 18;
+                                   -fx-background-radius: 12; -fx-border-color: #2a2a3e;
+                                   -fx-border-radius: 12; -fx-border-width: 1;">
+            <HBox spacing="10">
+                <Label text="Park" style="-fx-text-fill: #34d399; -fx-min-width: 90; -fx-font-size: 13px;"/>
+                <Label fx:id="parkLabel" style="-fx-text-fill: #f1f5f9; -fx-font-size: 13px; -fx-font-weight: bold;"/>
+            </HBox>
+            <HBox spacing="10">
+                <Label text="Date" style="-fx-text-fill: #34d399; -fx-min-width: 90; -fx-font-size: 13px;"/>
+                <Label fx:id="dateLabel" style="-fx-text-fill: #f1f5f9; -fx-font-size: 13px;"/>
+            </HBox>
+            <HBox spacing="10">
+                <Label text="Time" style="-fx-text-fill: #34d399; -fx-min-width: 90; -fx-font-size: 13px;"/>
+                <Label fx:id="timeLabel" style="-fx-text-fill: #f1f5f9; -fx-font-size: 13px;"/>
+            </HBox>
+            <HBox spacing="10">
+                <Label text="Visitors" style="-fx-text-fill: #34d399; -fx-min-width: 90; -fx-font-size: 13px;"/>
+                <Label fx:id="visitorsLabel" style="-fx-text-fill: #f1f5f9; -fx-font-size: 13px;"/>
+            </HBox>
+        </VBox>
+
+        <!-- Timer warning (shown only for waitlist) -->
+        <HBox fx:id="timerBox" spacing="8" alignment="CENTER_LEFT" visible="false" managed="false"
+              style="-fx-background-color: #2a1f0a; -fx-padding: 10 14; -fx-background-radius: 8;
+                     -fx-border-color: #854F0B; -fx-border-radius: 8; -fx-border-width: 1;">
+            <Label text="⏰" style="-fx-font-size: 14px;"/>
+            <Label fx:id="timerLabel" text="You have 1 hour to confirm"
+                   style="-fx-text-fill: #fbbf24; -fx-font-size: 12px; -fx-font-weight: bold;"/>
+        </HBox>
+    </VBox>
+
+    <!-- Buttons -->
+    <HBox spacing="12" alignment="CENTER"
+          style="-fx-padding: 4 24 24 24; -fx-background-color: #12121f;">
+        <Button fx:id="confirmBtn" text="✓  Confirm" onAction="#handleConfirm" prefWidth="170" prefHeight="42"
+                style="-fx-background-color: #10b981; -fx-text-fill: white; -fx-background-radius: 10;
+                       -fx-font-size: 14px; -fx-font-weight: bold; -fx-cursor: hand;"/>
+        <Button text="Later" onAction="#handleLater" prefWidth="130" prefHeight="42"
+                style="-fx-background-color: #252538; -fx-text-fill: #94a3b8; -fx-background-radius: 10;
+                       -fx-border-color: #34344f; -fx-border-width: 1; -fx-border-radius: 10;
+                       -fx-font-size: 14px; -fx-cursor: hand;"/>
+    </HBox>
+</VBox>

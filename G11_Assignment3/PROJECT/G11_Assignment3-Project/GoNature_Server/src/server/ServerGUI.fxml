@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<VBox spacing="14" xmlns:fx="http://javafx.com/fxml" fx:controller="server.ServerController"
+      style="-fx-background-color: #0d0d1a; -fx-padding: 20;">
+
+    <!-- Header -->
+    <HBox alignment="CENTER_LEFT" spacing="12">
+        <Label text="🌿" style="-fx-font-size: 28px;"/>
+        <VBox>
+            <Label text="GoNature Server" style="-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #34d399;"/>
+            <Label text="Nature Park Reservation System" style="-fx-font-size: 11px; -fx-text-fill: #5a6a7a;"/>
+        </VBox>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Label fx:id="serverIpLabel" text="IP: detecting..."
+               style="-fx-text-fill: #34d399; -fx-font-size: 12px; -fx-background-color: #0f2a1f; -fx-padding: 6 12; -fx-background-radius: 6;"/>
+    </HBox>
+
+    <Separator style="-fx-background-color: #1e2a3a;"/>
+
+    <!-- Config -->
+    <VBox spacing="8" style="-fx-background-color: #12121f; -fx-padding: 14; -fx-background-radius: 10;
+                              -fx-border-color: #1e2a3a; -fx-border-radius: 10;">
+        <Label text="Server Configuration" style="-fx-text-fill: #94a3b8; -fx-font-size: 12px; -fx-font-weight: bold;"/>
+        <GridPane hgap="12" vgap="8">
+            <Label text="Port:" GridPane.columnIndex="0" GridPane.rowIndex="0"
+                   style="-fx-text-fill: #94a3b8; -fx-min-width: 90;"/>
+            <TextField fx:id="portField" text="5555" prefWidth="80" GridPane.columnIndex="1" GridPane.rowIndex="0"
+                       style="-fx-background-color: #1c1c2e; -fx-text-fill: #f1f5f9; -fx-border-color: #2d3748; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 7;"/>
+
+            <Label text="DB URL:" GridPane.columnIndex="0" GridPane.rowIndex="1"
+                   style="-fx-text-fill: #94a3b8; -fx-min-width: 90;"/>
+            <TextField fx:id="dbUrlField" text="jdbc:mysql://localhost/gonature?serverTimezone=UTC"
+                       prefWidth="380" GridPane.columnIndex="1" GridPane.rowIndex="1"
+                       style="-fx-background-color: #1c1c2e; -fx-text-fill: #f1f5f9; -fx-border-color: #2d3748; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 7;"/>
+
+            <Label text="DB User:" GridPane.columnIndex="0" GridPane.rowIndex="2"
+                   style="-fx-text-fill: #94a3b8; -fx-min-width: 90;"/>
+            <TextField fx:id="dbUserField" text="root" prefWidth="160" GridPane.columnIndex="1" GridPane.rowIndex="2"
+                       style="-fx-background-color: #1c1c2e; -fx-text-fill: #f1f5f9; -fx-border-color: #2d3748; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 7;"/>
+
+            <Label text="DB Password:" GridPane.columnIndex="0" GridPane.rowIndex="3"
+                   style="-fx-text-fill: #94a3b8; -fx-min-width: 90;"/>
+            <PasswordField fx:id="dbPassField" promptText="Enter DB password" prefWidth="160"
+                           GridPane.columnIndex="1" GridPane.rowIndex="3"
+                           style="-fx-background-color: #1c1c2e; -fx-text-fill: #f1f5f9; -fx-border-color: #2d3748; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 7;"/>
+        </GridPane>
+
+        <HBox spacing="10" style="-fx-padding: 4 0 0 0;">
+            <Button fx:id="startButton" text="▶  Start Server" onAction="#handleStart"
+                    style="-fx-background-color: #10b981; -fx-text-fill: white; -fx-font-weight: bold;
+                           -fx-background-radius: 8; -fx-padding: 10 24; -fx-cursor: hand; -fx-font-size: 13px;"/>
+            <Button fx:id="stopButton" text="■  Stop Server" onAction="#handleStop" disable="true"
+                    style="-fx-background-color: #ef4444; -fx-text-fill: white; -fx-font-weight: bold;
+                           -fx-background-radius: 8; -fx-padding: 10 24; -fx-cursor: hand; -fx-font-size: 13px;"/>
+        </HBox>
+    </VBox>
+
+    <!-- Clients -->
+    <VBox spacing="6" style="-fx-background-color: #12121f; -fx-padding: 14; -fx-background-radius: 10;
+                              -fx-border-color: #1e2a3a; -fx-border-radius: 10;">
+        <Label text="Connected Clients" style="-fx-text-fill: #94a3b8; -fx-font-size: 12px; -fx-font-weight: bold;"/>
+        <TableView fx:id="clientTable" prefHeight="110"
+                   style="-fx-background-color: #0d0d1a; -fx-text-fill: #f1f5f9; -fx-border-color: #1e2a3a; -fx-border-radius: 6;">
+            <placeholder><Label text="No clients connected" style="-fx-text-fill: #5a6a7a;"/></placeholder>
+            <columns>
+                <TableColumn fx:id="colIp"     text="IP Address" prefWidth="150"/>
+                <TableColumn fx:id="colHost"   text="Host Name"  prefWidth="180"/>
+                <TableColumn fx:id="colStatus" text="Status"     prefWidth="100"/>
+            </columns>
+        </TableView>
+    </VBox>
+
+    <!-- Log -->
+    <VBox spacing="6" VBox.vgrow="ALWAYS" style="-fx-background-color: #12121f; -fx-padding: 14; -fx-background-radius: 10;
+                              -fx-border-color: #1e2a3a; -fx-border-radius: 10;">
+        <Label text="Server Log" style="-fx-text-fill: #94a3b8; -fx-font-size: 12px; -fx-font-weight: bold;"/>
+        <TextArea fx:id="logArea" editable="false" prefRowCount="9" VBox.vgrow="ALWAYS"
+                  style="-fx-control-inner-background: #0d0d1a; -fx-text-fill: #34d399;
+                         -fx-font-family: monospace; -fx-font-size: 12px;
+                         -fx-border-color: #1e2a3a; -fx-border-radius: 6;"/>
+    </VBox>
+
+</VBox>

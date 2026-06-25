@@ -42,12 +42,12 @@ public class ServerController implements Initializable {
     private ObservableList<String[]> clientData = FXCollections.observableArrayList();
 
     /**
-     * Initializes the server GUI.
-     * The method prepares the connected clients table, displays the local server IP,
-     * and writes the initial server status message to the log area.
+     * Initializes the server GUI components.
+     * The method configures the connected clients table, sets the initial log message,
+     * and displays the server IP address when it is available.
      *
-     * @param url the location used to resolve relative paths
-     * @param rb the resources used to localize the screen
+     * @param url the location used to resolve relative paths for the root object
+     * @param rb the resource bundle used to localize the root object
      */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -69,9 +69,9 @@ public class ServerController implements Initializable {
 
     /**
      * Handles the Start button action.
-     * The method validates the port and database fields, creates the server,
-     * connects it to the database, starts listening for clients,
-     * and updates the GUI state after a successful start.
+     * The method validates the server port and database connection fields,
+     * creates the server, connects it to the database, starts listening for clients,
+     * and disables the configuration fields after a successful start.
      */
     @FXML
     public void handleStart() {
@@ -167,10 +167,10 @@ public class ServerController implements Initializable {
         }
     }
     /**
-     * Returns the trimmed text from a text field.
+     * Safely reads and trims the text from a text field.
      *
-     * @param field the text field to read
-     * @return the trimmed field value, or an empty string if the field is empty
+     * @param field the text field to read from
+     * @return the trimmed text, or an empty string if the field is null
      */
     private String getText(TextField field) {
         if (field == null || field.getText() == null) {
@@ -180,10 +180,11 @@ public class ServerController implements Initializable {
     }
 
     /**
-     * Converts technical exception messages into user-friendly server error messages.
+     * Converts technical exception messages into user-friendly error messages
+     * that can be displayed in the server log area.
      *
      * @param e the exception that occurred while starting the server
-     * @return a user-friendly error message
+     * @return a readable error message for the server administrator
      */
     private String getFriendlyErrorMessage(Exception e) {
         String msg = e.getMessage();
@@ -210,7 +211,7 @@ public class ServerController implements Initializable {
     /**
      * Handles the Stop button action.
      * The method closes the running server, clears the connected clients table,
-     * and re-enables the server configuration fields.
+     * and enables the configuration fields again.
      */
     @FXML
     public void handleStop() {
@@ -224,14 +225,15 @@ public class ServerController implements Initializable {
     }
 
     /**
-     * Appends a message to the server log area on the JavaFX thread.
+     * Appends a message to the server log area.
+     * The update is executed on the JavaFX application thread.
      *
-     * @param msg the message to append to the log
+     * @param msg the message to display in the log area
      */
     public void appendLog(String msg) { Platform.runLater(() -> logArea.appendText(msg + "\n")); }
-    
     /**
-     * Adds or updates a connected client in the server clients table.
+     * Adds or updates a connected client in the clients table.
+     * If a client with the same IP already exists, it is replaced with the new data.
      *
      * @param ip the client IP address
      * @param host the client host name
@@ -240,8 +242,10 @@ public class ServerController implements Initializable {
     public void addClient(String ip, String host, String status) {
         Platform.runLater(() -> { clientData.removeIf(c -> c[0].equals(ip)); clientData.add(new String[]{ip, host, status}); });
     }
+    
     /**
-     * Removes a disconnected client from the server clients table.
+     * Removes a disconnected client from the clients table according to its IP address.
+     * The update is executed on the JavaFX application thread.
      *
      * @param ip the IP address of the client to remove
      */

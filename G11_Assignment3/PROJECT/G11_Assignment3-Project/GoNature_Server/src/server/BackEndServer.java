@@ -98,8 +98,10 @@ public class BackEndServer extends AbstractServer {
         if (uiController != null) uiController.addClient(ip, "...", "Connected");
     }
 
+    
     /**
-     * Handles client disconnection by processing logout and cleanup actions.
+     * Handles a normal client disconnection.
+     * The method delegates the cleanup process to {@link #processDisconnect(ConnectionToClient)}.
      *
      * @param client the disconnected client
      */
@@ -107,7 +109,8 @@ public class BackEndServer extends AbstractServer {
     synchronized protected void clientDisconnected(ConnectionToClient client) { processDisconnect(client); }
 
     /**
-     * Handles a client communication exception by processing the disconnect cleanup.
+     * Handles a client communication exception.
+     * The method runs the same cleanup process used for a normal disconnection.
      *
      * @param client the client whose connection caused the exception
      * @param ex the exception that occurred during communication
@@ -116,9 +119,9 @@ public class BackEndServer extends AbstractServer {
     synchronized protected void clientException(ConnectionToClient client, Throwable ex) { processDisconnect(client); }
 
     /**
-     * Performs cleanup actions after a client disconnects.
-     * The method prevents duplicate disconnect handling, logs out connected employees,
-     * releases traveler sessions, and removes the client from the server GUI.
+     * Performs cleanup actions after a client disconnects or when a connection exception occurs.
+     * The method prevents duplicate cleanup, logs out connected employees, releases traveler sessions,
+     * and removes the client from the server GUI.
      *
      * @param client the disconnected client
      */
@@ -149,12 +152,13 @@ public class BackEndServer extends AbstractServer {
     }
 
     /**
-     * Handles server stop events by writing a log message.
+     * Handles server stop event and writes a log message.
      */
     @Override protected void serverStopped() { log("Server stopped."); }
+    
     /**
-     * Handles server shutdown.
-     * The method stops the background reminder thread and disconnects from the database.
+     * Handles server close event.
+     * The method stops the reminder thread and disconnects from the database.
      */
     @Override protected void serverClosed() {
         log("Server closed.");
@@ -163,10 +167,11 @@ public class BackEndServer extends AbstractServer {
     }
 
     /**
-     * Updates the server GUI with the resolved host name of a connected client.
+     * Updates the client information displayed in the server GUI.
+     * The method removes the old client row and adds it again with the updated host name.
      *
      * @param ip the client IP address
-     * @param hostName the resolved client host name
+     * @param hostName the client host name
      */
     public void updateClientInUI(String ip, String hostName) {
         if (uiController != null) {
@@ -176,7 +181,7 @@ public class BackEndServer extends AbstractServer {
     }
 
     /**
-     * Writes a message to the console and to the server GUI log area.
+     * Writes a server message to the console and to the server GUI log area.
      *
      * @param msg the message to log
      */

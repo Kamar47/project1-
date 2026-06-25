@@ -70,6 +70,7 @@ public class MySqlConnector {
      *
      * @return the active JDBC connection, or null if no connection was opened
      */
+
     public Connection getConnection() { return connection; }
 
     /**

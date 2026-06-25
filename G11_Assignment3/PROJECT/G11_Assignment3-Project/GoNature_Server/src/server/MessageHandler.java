@@ -48,26 +48,30 @@ public class MessageHandler {
         java.util.Collections.synchronizedSet(new java.util.HashSet<>());
 
     /**
-     * Releases an active traveler session when the traveler disconnects or logs out.
-     * This allows the same traveler ID to log in again from another client.
+     * Releases an active traveler session.
+     * This method is used when a traveler logs out or when the client disconnects,
+     * so the same traveler ID can log in again later.
      *
-     * @param travelerId the traveler ID number to release from the active sessions set
+     * @param travelerId the traveler ID to remove from the active sessions set
      */
     public static void releaseTravelerSession(String travelerId) {
         if (travelerId != null) activeTravelerSessions.remove(travelerId);
     }
 
     /**
-     * Dispatches an incoming client message to the appropriate server-side logic.
-     * The method handles authentication, booking, waitlist management, entry and exit,
-     * park management, reports, notifications, and user management commands.
-     * It runs inside a synchronized database lock to protect the shared database connection
-     * when multiple clients send requests at the same time.
+     * Handles an incoming message from a client and dispatches it according to its command.
+     * The method processes login, booking, waitlist, entry and exit, reports, notifications,
+     * parameter requests, promotions, and user management operations.
+     * <p>
+     * The entire handling process is synchronized on {@link DB.MySqlConnector#DB_LOCK}
+     * because the server may handle several clients at the same time while using a shared
+     * database connection.
+     * </p>
      *
      * @param msg the message received from the client
      * @param client the client connection used to send the response
-     * @param db the database controller for this server session
-     * @param server the server instance used for logging server actions
+     * @param db the database controller used for database operations
+     * @param server the server instance used for logging and UI updates
      */
     public static void handle(ClientServerMessage msg, ConnectionToClient client,
                                DatabaseController db, BackEndServer server) {
@@ -487,8 +491,13 @@ public class MessageHandler {
                     respond(client, Command.DATA_RESPONSE, reportResult);
                     break;
                 case GET_ALL_REPORTS:
-                    int reportsParkId = (int) msg.getData();
-                    respond(client, Command.DATA_RESPONSE, db.getReportsByPark(reportsParkId));
+                    // parkId is optional: null = all parks (dept manager), int = specific park
+                    if (msg.getData() == null) {
+                        respond(client, Command.DATA_RESPONSE, db.getAllReports());
+                    } else {
+                        int reportsParkId = ((Number) msg.getData()).intValue();
+                        respond(client, Command.DATA_RESPONSE, db.getReportsByPark(reportsParkId));
+                    }
                     break;
                     
                     
@@ -559,13 +568,14 @@ public class MessageHandler {
     }
 
     /**
-     * Sends a response message to a connected client.
-     * The response is wrapped as a successful ClientServerMessage with the given command and data.
+     * Sends a response message back to the client.
+     * The response is wrapped as a successful {@link ClientServerMessage}
+     * with the given command and data.
      *
-     * @param client the client connection that should receive the response
+     * @param client the client connection that will receive the response
      * @param cmd the response command
-     * @param data the response data
-     * @throws IOException if the response cannot be sent to the client
+     * @param data the response data to send
+     * @throws IOException if sending the response to the client fails
      */
     private static void respond(ConnectionToClient client, Command cmd, Object data) throws IOException {
         client.sendToClient(ClientServerMessage.success(cmd, data));

@@ -26,8 +26,7 @@ import common.worker.GeneralParkWorker;
  *   <li>Entry/Exit: {@code recordEntry()}, {@code recordExit()}, {@code travelerExit()}</li>
  *   <li>Waitlist: {@code createWaitlistOrder()}, {@code processWaitingLists()},
  *       {@code expireOldWaitlistOffers()}</li>
- *   <li>Parameters: {@code createParameterRequest()}, {@code approveParameterRequest()},
-    {@code rejectParameterRequest()}</li>
+ *   <li>Parameters: {@code requestParameterChange()}, {@code approveParameterChange()}</li>
  *   <li>Reports: {@code generateReport()} — produces formatted text for visits,
  *       cancellations, total visitors, and usage reports</li>
  *   <li>Notifications: {@code getUnreadNotifications()}, {@code markNotificationRead()}</li>
@@ -108,7 +107,8 @@ public class DatabaseController {
     // === ORDERS ===
     /**
      * Creates a new order in the database.
-     * The method inserts the order details and returns the generated order ID.
+     * The method inserts the order details, generates a confirmation code,
+     * and returns the generated order ID.
      *
      * @param order the order to create
      * @return the generated order ID
@@ -681,7 +681,6 @@ public class DatabaseController {
 
         return rows;
     }
-    
     /**
      * Promotes eligible waitlist orders for a specific park, date, and time slot.
      * Orders are promoted according to their waitlist position if enough capacity is available.
@@ -903,6 +902,7 @@ public class DatabaseController {
         ps.setDouble(4, newVal); ps.setString(5, "pending"); ps.setInt(6, requestedBy);
         ps.executeUpdate(); ps.close();
     }
+    
     
     /**
      * Calculates the total number of walk-in visitors recorded today for a specific park.
@@ -1344,7 +1344,7 @@ public class DatabaseController {
         return null; // not enough room
     }
 
-    
+    // Atomic walk-in: same idea for walk-in entries against the gap.
     /**
      * Atomically checks walk-in capacity and records a walk-in visit.
      * <p>
@@ -1376,7 +1376,6 @@ public class DatabaseController {
         return false;
     }
 
-    
     /**
      * Checks whether a visitor currently has an active walk-in visit today.
      * Only visits without an exit time are considered active.
@@ -1399,6 +1398,7 @@ public class DatabaseController {
     }
 
 
+    // Marks a day-before reminder as confirmed so the order is NOT auto-cancelled
     /**
      * Confirms a day-before visit reminder.
      * A confirmed reminder prevents the order from being automatically cancelled.
@@ -1418,6 +1418,7 @@ public class DatabaseController {
     }
 
 
+    // Returns the numeric guide_id for a guide's national ID, or -1 if not a guide
     /**
      * Retrieves the guide identifier for a given national ID number.
      *
@@ -1456,7 +1457,7 @@ public class DatabaseController {
     }
 
 
-    // Returns unread reminder + waitlist_available notifications for a traveler
+ // Returns unread reminder + waitlist_available notifications for a traveler
     // Uses visitor_id via join to orders table
     /**
      * Returns all unread notifications for the given traveler.
@@ -1518,6 +1519,7 @@ public class DatabaseController {
     }
 
 
+    // Returns order by confirmation code (for park worker entrance using code instead of ID)
     /**
      * Retrieves an order by its confirmation code.
      * This method is used by park workers during entrance control.
@@ -1677,7 +1679,6 @@ public class DatabaseController {
         return order;
     }
 
-    
     /**
      * Performs a traveler-initiated self-exit from their active park visit.
      * <p>

@@ -16,6 +16,17 @@ import javafx.stage.Stage;
 import java.net.URL;
 import java.util.*;
 
+/**
+ * JavaFX controller for the Department Manager Reports screen (DeptManagerReports.fxml).
+ * <p>
+ * Allows the department manager to generate and view reports across all parks
+ * or for a specific park. Supports the same four report types as
+ * {@link ParkManagerCreateReportController}: visits, cancellations,
+ * total visitors, and usage.
+ * </p>
+ *
+ * @author Group 11
+ */
 public class DeptManagerReportsController implements Initializable, ClientMessageHandler {
     @FXML private ComboBox<String> reportTypeCombo, parkCombo, monthCombo, yearCombo;
     @FXML private Label statusLabel;
@@ -23,6 +34,14 @@ public class DeptManagerReportsController implements Initializable, ClientMessag
     private ArrayList<Park> parks;
     private String currentAction;
 
+    /**
+     * Initializes the department manager reports screen.
+     * The method prepares the report type, month, and year selection fields,
+     * checks the server connection, and loads the list of parks from the server.
+     *
+     * @param url the location used to resolve relative paths
+     * @param rb the resources used to localize the screen
+     */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         reportTypeCombo.setItems(FXCollections.observableArrayList("Visit Report", "Cancellation Report"));
@@ -38,6 +57,11 @@ public class DeptManagerReportsController implements Initializable, ClientMessag
         ClientUI.client.sendMessage(new ClientServerMessage(Command.GET_ALL_PARKS));
     }
 
+    /**
+     * Handles report generation according to the selected report type, park, month, and year.
+     * The method validates the required selections and sends the appropriate report request
+     * to the server.
+     */
     @FXML
     private void handleGenerate() {
     	if (!ClientUI.isServerConnected()) {
@@ -65,6 +89,9 @@ public class DeptManagerReportsController implements Initializable, ClientMessag
         ClientUI.client.sendMessage(new ClientServerMessage(cmd, params));
     }
 
+    /**
+     * Requests all saved reports from the server and displays them on the screen.
+     */
     @FXML
     private void handleViewExisting() {
     	if (!ClientUI.isServerConnected()) {
@@ -76,6 +103,14 @@ public class DeptManagerReportsController implements Initializable, ClientMessag
         ClientUI.client.sendMessage(new ClientServerMessage(Command.GET_ALL_REPORTS));
     }
 
+    /**
+     * Handles server responses related to park loading, report generation,
+     * and saved report retrieval.
+     * The method updates the combo boxes, opens report windows, or displays saved reports
+     * according to the current action.
+     *
+     * @param msg the message received from the server
+     */
     @Override
     @SuppressWarnings("unchecked")
     public void handleMessage(ClientServerMessage msg) {
@@ -102,6 +137,13 @@ public class DeptManagerReportsController implements Initializable, ClientMessag
     }
 
     // ========== VISIT REPORT POPUP ==========
+    /**
+     * Opens a popup window that displays the generated visit report.
+     * The method parses the report data, builds a line chart for average stay time,
+     * and displays a summary table for individual visitors and organized groups.
+     *
+     * @param data the generated visit report data received from the server
+     */
     private void openVisitReportWindow(String data) {
         Map<Integer, List<Integer>> indivStays = new TreeMap<>();
         Map<Integer, List<Integer>> groupStays = new TreeMap<>();
@@ -182,6 +224,13 @@ public class DeptManagerReportsController implements Initializable, ClientMessag
     }
 
     // ========== CANCELLATION REPORT POPUP ==========
+    /**
+     * Opens a popup window that displays the generated cancellation report.
+     * The method parses the report data, builds a daily cancellation chart,
+     * and displays a summary table with cancellation statistics.
+     *
+     * @param data the generated cancellation report data received from the server
+     */
     private void openCancellationReportWindow(String data) {
         int cancelled = 0, noShow = 0, expired = 0;
         Map<String, Integer> daily = new LinkedHashMap<>();
@@ -258,6 +307,12 @@ public class DeptManagerReportsController implements Initializable, ClientMessag
     }
 
     // ========== SAVED REPORTS ==========
+    /**
+     * Displays the list of saved reports inside the report area.
+     * If no reports are available, an empty-state message is shown.
+     *
+     * @param reports the list of saved reports to display
+     */
     private void showSavedReports(ArrayList<String> reports) {
         reportBox.getChildren().clear();
         Label title = new Label("Saved Reports");
@@ -283,6 +338,17 @@ public class DeptManagerReportsController implements Initializable, ClientMessag
     }
 
     // ========== HELPERS ==========
+    /**
+     * Adds a formatted row to a report summary table.
+     *
+     * @param grid the grid pane that represents the table
+     * @param row the row index in the grid
+     * @param c1 the first column text
+     * @param c2 the second column text
+     * @param c3 the third column text
+     * @param c4 the fourth column text
+     * @param isHeader true if the row should be styled as a header, otherwise false
+     */
     private void addRow(GridPane grid, int row, String c1, String c2, String c3, String c4, boolean isHeader) {
         String style = isHeader ? "-fx-text-fill: #2d6a4f; -fx-font-weight: bold; -fx-font-size: 13px;" : "-fx-text-fill: #e0e0f0; -fx-font-size: 12px;";
         Label l1 = new Label(c1); l1.setStyle(style); l1.setMinWidth(120); grid.add(l1, 0, row);
@@ -290,6 +356,13 @@ public class DeptManagerReportsController implements Initializable, ClientMessag
         if (!c3.isEmpty()) { Label l3 = new Label(c3); l3.setStyle(style); grid.add(l3, 2, row); }
         if (!c4.isEmpty()) { Label l4 = new Label(c4); l4.setStyle(style); grid.add(l4, 3, row); }
     }
+    /**
+     * Displays a status message on the screen.
+     * The message color is changed according to whether it represents an error or success.
+     *
+     * @param msg the message to display
+     * @param error true if the message represents an error, otherwise false
+     */
     private void showStatus(String msg, boolean error) {
         statusLabel.setWrapText(true);
         statusLabel.setMaxWidth(700);
@@ -297,6 +370,11 @@ public class DeptManagerReportsController implements Initializable, ClientMessag
         statusLabel.setStyle("-fx-text-fill: " + (error ? "#e94560" : "#00e676") + ";");
     }
 
+    /**
+     * Handles server disconnection by displaying an error message to the department manager.
+     *
+     * @param r the reason for the disconnection
+     */
     @Override
     public void onDisconnected(String r) {
         Platform.runLater(() -> {

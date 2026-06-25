@@ -15,6 +15,26 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
+/**
+ * JavaFX controller for the Lookup User screen (LookupUser.fxml),
+ * accessible to service representatives.
+ * <p>
+ * Allows the representative to search for any registered user by ID:
+ * </p>
+ * <ul>
+ *   <li>Subscriber search: enter the subscriber's national ID number.
+ *       Returns name, ID, email, phone, family size, and member number.</li>
+ *   <li>Employee search: enter the employee's internal employee number.
+ *       Returns name, employee number, role, park assignment, and email.
+ *       Password is never displayed.</li>
+ * </ul>
+ * <p>
+ * Results are displayed in a styled card with colour-coded accent:
+ * green for subscribers, blue for employees, red for not found.
+ * </p>
+ *
+ * @author Group 11
+ */
 public class LookupUserController implements ClientMessageHandler {
     @FXML private TextField lookupIdField;
     @FXML private VBox resultCard;
@@ -22,6 +42,10 @@ public class LookupUserController implements ClientMessageHandler {
     @FXML private VBox cardRows;
     @FXML private Label errorLabel;
 
+    /**
+     * Handles user lookup by reading the entered ID and sending a subscriber lookup request
+     * to the server. If the ID field is empty, an error message is displayed.
+     */
     @FXML
     private void handleLookup() {
         String id = lookupIdField.getText().trim();
@@ -31,6 +55,13 @@ public class LookupUserController implements ClientMessageHandler {
         ClientUI.client.sendMessage(new ClientServerMessage(Command.LOOKUP_SUBSCRIBER, id));
     }
 
+    /**
+     * Handles the server response for user lookup.
+     * The method displays subscriber details, employee details, or a not-found message
+     * according to the response data returned by the server.
+     *
+     * @param msg the message received from the server
+     */
     @Override
     public void handleMessage(ClientServerMessage msg) {
         Platform.runLater(() -> {
@@ -63,6 +94,14 @@ public class LookupUserController implements ClientMessageHandler {
         });
     }
 
+    /**
+     * Adds a formatted information row to the result card.
+     *
+     * @param parent the VBox that contains the result rows
+     * @param label the field name displayed on the left side of the row
+     * @param value the field value displayed on the right side of the row
+     * @param accent the CSS color used as the row accent
+     */
     private void addRow(VBox parent, String label, String value, String accent) {
         if (parent.getChildren().size() > 0)
             parent.getChildren().add(new Separator());
@@ -83,6 +122,9 @@ public class LookupUserController implements ClientMessageHandler {
         parent.getChildren().add(row);
     }
 
+    /**
+     * Displays the result card and hides the error message.
+     */
     private void showCard() {
         resultCard.setVisible(true);
         resultCard.setManaged(true);
@@ -90,6 +132,11 @@ public class LookupUserController implements ClientMessageHandler {
         errorLabel.setManaged(false);
     }
 
+    /**
+     * Displays an error message and hides the result card.
+     *
+     * @param msg the error message to display
+     */
     private void showError(String msg) {
         errorLabel.setText(msg);
         errorLabel.setVisible(true);
@@ -98,6 +145,9 @@ public class LookupUserController implements ClientMessageHandler {
         resultCard.setManaged(false);
     }
 
+    /**
+     * Hides both the result card and the error message.
+     */
     private void hideAll() {
         resultCard.setVisible(false);
         resultCard.setManaged(false);
@@ -105,8 +155,20 @@ public class LookupUserController implements ClientMessageHandler {
         errorLabel.setManaged(false);
     }
 
+    /**
+     * Converts an empty or null value into a default display value.
+     *
+     * @param v the value to check
+     * @return the original value, or N/A if the value is null or empty
+     */
     private String orNA(String v) { return (v == null || v.isEmpty()) ? "N/A" : v; }
 
+    /**
+     * Converts an internal employee role value into a user-friendly display label.
+     *
+     * @param role the internal role value
+     * @return the formatted role label
+     */
     private String formatRole(String role) {
         if (role == null) return "N/A";
         switch (role) {
@@ -118,6 +180,11 @@ public class LookupUserController implements ClientMessageHandler {
         }
     }
 
+    /**
+     * Handles server disconnection by displaying an error message on the screen.
+     *
+     * @param r the reason for the disconnection
+     */
     @Override
     public void onDisconnected(String r) {
         Platform.runLater(() -> showError("Server disconnected."));

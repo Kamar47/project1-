@@ -12,6 +12,16 @@ import java.net.URL;
 import java.time.LocalDate;
 import java.util.*;
 
+/**
+ * JavaFX controller for the Park Promotions screen (ParkManagerPromotions.fxml).
+ * <p>
+ * Allows the park manager to create special discount promotions for their park.
+ * Each promotion specifies a discount percentage and a date range.
+ * Promotions require approval from the department manager before they affect pricing.
+ * </p>
+ *
+ * @author Group 11
+ */
 public class ParkManagerPromotionsController implements Initializable, ClientMessageHandler {
     @FXML private TextField discountField, descField;
     @FXML private DatePicker startDatePicker, endDatePicker;
@@ -20,6 +30,14 @@ public class ParkManagerPromotionsController implements Initializable, ClientMes
     @FXML private TableColumn<ArrayList<String>, String> colId, colDiscount, colStart, colEnd, colDesc, colStatus;
     private String currentAction;
 
+    /**
+     * Initializes the park manager promotions screen.
+     * The method prepares the promotions table, configures the status column,
+     * checks the server connection, and loads the existing promotion requests.
+     *
+     * @param url the location used to resolve relative paths
+     * @param rb the resources used to localize the screen
+     */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         colId.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().get(0)));
@@ -54,6 +72,11 @@ public class ParkManagerPromotionsController implements Initializable, ClientMes
         loadPromotions();
     }
 
+    /**
+     * Handles submission of a new promotion request.
+     * The method validates the discount percentage, date range, and description,
+     * then sends the promotion request to the server for department manager approval.
+     */
     @FXML
     private void handleSubmit() {
     	if (!ClientUI.isServerConnected()) {
@@ -95,12 +118,24 @@ public class ParkManagerPromotionsController implements Initializable, ClientMes
         ClientUI.client.sendMessage(new ClientServerMessage(Command.CREATE_PROMOTION, params));
     }
 
+    /**
+     * Displays an error message on the promotions screen.
+     *
+     * @param msg the error message to display
+     */
     private void showError(String msg) {
         showStatus(msg, true);
     }
 
+    /**
+     * Reloads the promotion requests from the server.
+     */
     @FXML private void handleRefresh() { loadPromotions(); }
 
+    /**
+     * Loads all promotion requests submitted for the park managed by the logged-in park manager.
+     * If the server is disconnected or the worker session is missing, an error message is displayed.
+     */
     private void loadPromotions() {
         if (!ClientUI.isServerConnected()) {
             showStatus("Server disconnected. Cannot load promotions.", true);
@@ -116,6 +151,13 @@ public class ParkManagerPromotionsController implements Initializable, ClientMes
         ClientUI.client.sendMessage(new ClientServerMessage(Command.GET_MY_PROMOTIONS, w.getParkId()));
     }
 
+    /**
+     * Handles server responses for submitting and loading promotion requests.
+     * The method updates the promotions table, clears the input fields after successful submission,
+     * and displays status messages according to the server response.
+     *
+     * @param msg the message received from the server
+     */
     @Override
     @SuppressWarnings("unchecked")
     public void handleMessage(ClientServerMessage msg) {
@@ -141,6 +183,13 @@ public class ParkManagerPromotionsController implements Initializable, ClientMes
             }
         });
     }
+    /**
+     * Displays a status message on the park manager promotions screen.
+     * The message color is changed according to whether it represents an error or success.
+     *
+     * @param msg the message to display
+     * @param error true if the message represents an error, otherwise false
+     */
     private void showStatus(String msg, boolean error) {
         statusLabel.setWrapText(true);
         statusLabel.setMaxWidth(700);
@@ -148,6 +197,11 @@ public class ParkManagerPromotionsController implements Initializable, ClientMes
         statusLabel.setStyle("-fx-text-fill: " + (error ? "#e94560" : "#00e676") + ";");
     }
 
+    /**
+     * Handles server disconnection by displaying an error message on the screen.
+     *
+     * @param r the reason for the disconnection
+     */
     @Override
     public void onDisconnected(String r) {
         Platform.runLater(() -> {

@@ -7,12 +7,54 @@ import java.util.UUID;
 import common.*;
 import common.worker.GeneralParkWorker;
 
+/**
+ * Provides all database access methods for the GoNature server.
+ * <p>
+ * This class wraps a shared {@link java.sql.Connection} obtained from
+ * {@link MySqlConnector} and exposes one method per logical database operation.
+ * All callers must hold {@link MySqlConnector#DB_LOCK} before invoking any method
+ * in order to guarantee thread safety (enforced by {@link server.MessageHandler}).
+ * </p>
+ *
+ * <p><b>Operation groups:</b></p>
+ * <ul>
+ *   <li>Parks: {@code getAllParks()}, {@code getParkById()}, {@code updateParkVisitors()}</li>
+ *   <li>Authentication: {@code travelerLogin()}, {@code workerLogin()}, {@code workerLogout()}</li>
+ *   <li>Orders: {@code bookOrderAtomic()}, {@code cancelOrderAndProcessWaitlist()},
+ *       {@code confirmReminder()}, {@code confirmWaitlistOffer()}</li>
+ *   <li>Walk-in: {@code walkInAtomic()} — atomic check-and-insert preventing over-capacity</li>
+ *   <li>Entry/Exit: {@code recordEntry()}, {@code recordExit()}, {@code travelerExit()}</li>
+ *   <li>Waitlist: {@code createWaitlistOrder()}, {@code processWaitingLists()},
+ *       {@code expireOldWaitlistOffers()}</li>
+ *   <li>Parameters: {@code createParameterRequest()}, {@code approveParameterRequest()},
+    {@code rejectParameterRequest()}</li>
+ *   <li>Reports: {@code generateReport()} — produces formatted text for visits,
+ *       cancellations, total visitors, and usage reports</li>
+ *   <li>Notifications: {@code getUnreadNotifications()}, {@code markNotificationRead()}</li>
+ *   <li>User management: {@code registerSubscriber()}, {@code registerGuide()},
+ *       {@code updateSubscriberProfile()}, {@code getSubscriberByIdNumber()},
+ *       {@code lookupSubscriber()}, {@code getEmployeeById()}</li>
+ * </ul>
+ *
+ * @author Group 11
+ */
 public class DatabaseController {
     private Connection conn;
 
+    /**
+     * Creates a database controller using an existing database connection.
+     *
+     * @param conn the active database connection used by this controller
+     */
     public DatabaseController(Connection conn) { this.conn = conn; }
 
     // === PARKS ===
+    /**
+     * Retrieves all parks from the database.
+     *
+     * @return a list of all parks in the system
+     * @throws SQLException if the park query fails
+     */
     public ArrayList<Park> getAllParks() throws SQLException {
         ArrayList<Park> parks = new ArrayList<>();
         try (Statement st = conn.createStatement();
@@ -27,6 +69,13 @@ public class DatabaseController {
         return parks;
     }
 
+    /**
+     * Retrieves a park by its identifier.
+     *
+     * @param parkId the park identifier
+     * @return the matching park, or null if no park was found
+     * @throws SQLException if the park query fails
+     */
     public Park getParkById(int parkId) throws SQLException {
         PreparedStatement ps = conn.prepareStatement("SELECT * FROM parks WHERE park_id = ?");
         ps.setInt(1, parkId);
@@ -42,6 +91,13 @@ public class DatabaseController {
         return park;
     }
 
+    /**
+     * Updates the current number of visitors in a park.
+     *
+     * @param parkId the park identifier
+     * @param change the visitor count change to apply
+     * @throws SQLException if the update operation fails
+     */
     public void updateParkVisitors(int parkId, int change) throws SQLException {
         PreparedStatement ps = conn.prepareStatement(
             "UPDATE parks SET current_visitors = current_visitors + ? WHERE park_id = ?");
@@ -50,6 +106,14 @@ public class DatabaseController {
     }
 
     // === ORDERS ===
+    /**
+     * Creates a new order in the database.
+     * The method inserts the order details and returns the generated order ID.
+     *
+     * @param order the order to create
+     * @return the generated order ID
+     * @throws SQLException if the order creation fails
+     */
     public int createOrder(Order order) throws SQLException {
         String code = "CONF-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         // If visit is today, mark reminder as already sent+confirmed — no reminder needed
@@ -79,6 +143,13 @@ public class DatabaseController {
         return id;
     }
 
+    /**
+     * Retrieves all orders that belong to a specific traveler.
+     *
+     * @param travelerId the traveler ID number
+     * @return a list of the traveler's orders
+     * @throws SQLException if the order query fails
+     */
     public ArrayList<Order> getOrdersByTravelerId(String travelerId) throws SQLException {
         ArrayList<Order> orders = new ArrayList<>();
         PreparedStatement ps = conn.prepareStatement(
@@ -94,6 +165,14 @@ public class DatabaseController {
         return orders;
     }
 
+    /**
+     * Updates the status of an existing order.
+     *
+     * @param orderId the order identifier
+     * @param status the new order status
+     * @return true if the order was updated, otherwise false
+     * @throws SQLException if the update operation fails
+     */
     public boolean updateOrderStatus(int orderId, String status) throws SQLException {
         PreparedStatement ps = conn.prepareStatement("UPDATE orders SET status = ? WHERE order_id = ?");
         ps.setString(1, status); ps.setInt(2, orderId);
@@ -101,6 +180,12 @@ public class DatabaseController {
         return rows > 0;
     }
     
+    /**
+     * Retrieves all saved reports from the database.
+     *
+     * @return a list of saved report records
+     * @throws SQLException if the report query fails
+     */
     public ArrayList<String> getAllReports() throws SQLException {
         ArrayList<String> reports = new ArrayList<>();
         PreparedStatement ps = conn.prepareStatement(
@@ -116,6 +201,13 @@ public class DatabaseController {
         return reports;
     }
     
+    /**
+     * Retrieves parameter change requests for a specific park.
+     *
+     * @param parkId the park identifier
+     * @return a list of parameter request rows for the park
+     * @throws SQLException if the request query fails
+     */
     public ArrayList<ArrayList<String>> getParameterRequestsByPark(int parkId) throws SQLException {
         ArrayList<ArrayList<String>> requests = new ArrayList<>();
         PreparedStatement ps = conn.prepareStatement(
@@ -135,6 +227,15 @@ public class DatabaseController {
         return requests;
     }
 
+    /**
+     * Checks the available visitor capacity for a specific park, date, and entry time.
+     *
+     * @param parkId the park identifier
+     * @param date the requested visit date
+     * @param time the requested entry time
+     * @return the number of available visitor spots
+     * @throws SQLException if the availability query fails
+     */
     public int checkAvailability(int parkId, String date, String time) throws SQLException {
         Park park = getParkById(parkId);
         if (park == null) return 0;
@@ -161,6 +262,14 @@ public class DatabaseController {
     }
 
     // === WORKERS ===
+    /**
+     * Authenticates a park department employee by username and password.
+     *
+     * @param username the employee username
+     * @param password the employee password
+     * @return the matching worker if authentication succeeds, otherwise null
+     * @throws SQLException if the login query fails
+     */
     public GeneralParkWorker workerLogin(String username, String password) throws SQLException {
         PreparedStatement ps = conn.prepareStatement("SELECT * FROM employees WHERE username = ? AND password = ?");
         ps.setString(1, username); ps.setString(2, password);
@@ -177,6 +286,12 @@ public class DatabaseController {
         return worker;
     }
 
+    /**
+     * Logs out an employee by updating the worker session state in the database.
+     *
+     * @param employeeId the employee identifier
+     * @throws SQLException if the logout update fails
+     */
     public void workerLogout(int employeeId) throws SQLException {
         PreparedStatement ps = conn.prepareStatement("UPDATE employees SET is_logged_in = FALSE WHERE employee_id = ?");
         ps.setInt(1, employeeId); ps.executeUpdate(); ps.close();
@@ -184,6 +299,13 @@ public class DatabaseController {
 
     // === SUBSCRIBERS ===
     // === GUIDES ===
+    /**
+     * Checks whether a traveler is registered as a tour guide.
+     *
+     * @param idNumber the traveler ID number
+     * @return true if the traveler is a registered guide, otherwise false
+     * @throws SQLException if the guide lookup fails
+     */
     public boolean isRegisteredGuide(String idNumber) throws SQLException {
         PreparedStatement ps = conn.prepareStatement("SELECT guide_id FROM guides WHERE id_number = ?");
         ps.setString(1, idNumber);
@@ -192,6 +314,13 @@ public class DatabaseController {
         rs.close(); ps.close();
         return found;
     }
+    /**
+     * Retrieves all promotion requests and promotions for a specific park.
+     *
+     * @param parkId the park identifier
+     * @return a list of promotion rows for the park
+     * @throws SQLException if the promotion query fails
+     */
     public ArrayList<ArrayList<String>> getPromotionsByPark(int parkId) throws SQLException {
         ArrayList<ArrayList<String>> promos = new ArrayList<>();
         PreparedStatement ps = conn.prepareStatement(
@@ -214,7 +343,13 @@ public class DatabaseController {
     }
     
     
-    
+    /**
+     * Retrieves saved reports for a specific park.
+     *
+     * @param parkId the park identifier
+     * @return a list of saved report rows for the park
+     * @throws SQLException if the report query fails
+     */
     public ArrayList<ArrayList<String>> getReportsByPark(int parkId) throws SQLException {
         ArrayList<ArrayList<String>> reports = new ArrayList<>();
         PreparedStatement ps = conn.prepareStatement(
@@ -236,6 +371,16 @@ public class DatabaseController {
         return reports;
     }
 
+    /**
+     * Registers a new tour guide in the system.
+     *
+     * @param idNumber the guide ID number
+     * @param firstName the guide first name
+     * @param lastName the guide last name
+     * @param email the guide email address
+     * @param phone the guide phone number
+     * @throws SQLException if the registration operation fails
+     */
     public void registerGuide(String idNumber, String firstName, String lastName, String email, String phone) throws SQLException {
         // Prevent duplicate guide registration
         PreparedStatement check = conn.prepareStatement("SELECT COUNT(*) FROM guides WHERE id_number = ?");
@@ -253,6 +398,13 @@ public class DatabaseController {
     }
 
     // === SUBSCRIBERS ===
+    /**
+     * Registers a new subscriber in the family-club membership system.
+     *
+     * @param sub the subscriber details to register
+     * @return the generated subscriber ID
+     * @throws SQLException if the subscriber registration fails
+     */
     public int registerSubscriber(Subscriber sub) throws SQLException {
         PreparedStatement ps = conn.prepareStatement(
             "INSERT INTO subscribers (id_number, first_name, last_name, phone, email, family_members, credit_card) VALUES (?,?,?,?,?,?,?)",
@@ -267,6 +419,13 @@ public class DatabaseController {
         return id;
     }
 
+    /**
+     * Retrieves a subscriber by national ID number.
+     *
+     * @param idNumber the subscriber national ID number
+     * @return the matching subscriber, or null if no subscriber was found
+     * @throws SQLException if the subscriber query fails
+     */
     public Subscriber getSubscriberByIdNumber(String idNumber) throws SQLException {
         PreparedStatement ps = conn.prepareStatement("SELECT * FROM subscribers WHERE id_number = ?");
         ps.setString(1, idNumber);
@@ -284,10 +443,30 @@ public class DatabaseController {
     }
 
     // === PARK VISITS (Entry/Exit) ===
+    /**
+     * Records visitor entry for an existing order using the default visit type.
+     *
+     * @param orderId the order identifier
+     * @param parkId the park identifier
+     * @param visitorId the visitor ID number
+     * @param numVisitors the number of visitors entering the park
+     * @throws SQLException if the entry recording fails
+     */
     public void recordEntry(int orderId, int parkId, String visitorId, int numVisitors) throws SQLException {
         recordEntry(orderId, parkId, visitorId, numVisitors, orderId > 0 ? "reserved" : "walk_in");
     }
 
+    /**
+     * Records visitor entry for an existing order and visit type.
+     * The method updates park capacity and stores the visit entry record.
+     *
+     * @param orderId the order identifier
+     * @param parkId the park identifier
+     * @param visitorId the visitor ID number
+     * @param numVisitors the number of visitors entering the park
+     * @param visitType the visit type used for the entry record
+     * @throws SQLException if the entry recording fails
+     */
     public void recordEntry(int orderId, int parkId, String visitorId, int numVisitors, String visitType) throws SQLException {
         PreparedStatement ps = conn.prepareStatement(
             "INSERT INTO park_visits (order_id, park_id, visitor_id, num_visitors, entry_time, visit_type) VALUES (?,?,?,?,NOW(),?)");
@@ -297,6 +476,15 @@ public class DatabaseController {
         updateParkVisitors(parkId, numVisitors);
     }
 
+    /**
+     * Records visitor exit from a park and updates the current visitor count.
+     *
+     * @param parkId the park identifier
+     * @param visitorId the visitor ID number
+     * @param numVisitors the number of visitors leaving the park
+     * @return true if the exit was recorded successfully, otherwise false
+     * @throws SQLException if the exit recording fails
+     */
     public boolean recordExit(int parkId, String visitorId, int numVisitors) throws SQLException {
         // Get the actual num_visitors from the DB — do NOT trust the client-supplied number
         PreparedStatement psGet = conn.prepareStatement(
@@ -335,6 +523,15 @@ public class DatabaseController {
 
 
     // === WAITLIST ===
+    /**
+     * Creates a new waitlist order and adds it to the waitlist table.
+     * The method creates the order with waitlist status, generates a waitlist confirmation code,
+     * and assigns the next position in the waitlist for the requested park and date.
+     *
+     * @param order the order details to add to the waitlist
+     * @return the generated order ID
+     * @throws SQLException if the waitlist order creation fails
+     */
     public int createWaitlistOrder(Order order) throws SQLException {
         // Create the order with waitlist status
         String code = "WL-" + java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase();
@@ -370,6 +567,13 @@ public class DatabaseController {
         order.setOrderId(orderId); order.setConfirmationCode(code);
         return orderId;
     }
+    /**
+     * Normalizes a time value to HH:mm:ss format.
+     * If the given time is already in full format, it is returned unchanged.
+     *
+     * @param time the time value to normalize
+     * @return the normalized time value
+     */
     private String normalizeTime(String time) {
         if (time == null) {
             return "";
@@ -383,6 +587,15 @@ public class DatabaseController {
 
         return time;
     }
+    /**
+     * Calculates the total number of visitors currently waiting for a specific park, date, and time slot.
+     *
+     * @param parkId the park identifier
+     * @param date the requested visit date
+     * @param time the requested visit time
+     * @return the total number of visitors waiting for the slot
+     * @throws SQLException if the waitlist query fails
+     */
     public int getWaitingVisitorsForSlot(int parkId, String date, String time) throws SQLException {
         PreparedStatement ps = conn.prepareStatement(
             "SELECT COALESCE(SUM(o.num_visitors), 0) AS total_waiting " +
@@ -411,6 +624,15 @@ public class DatabaseController {
 
         return total;
     }
+    /**
+     * Checks whether there is an active waiting list for a specific park, date, and time slot.
+     *
+     * @param parkId the park identifier
+     * @param date the requested visit date
+     * @param time the requested visit time
+     * @return true if an active waitlist exists for the slot, otherwise false
+     * @throws SQLException if the waitlist query fails
+     */
     public boolean hasActiveWaitlistForSlot(int parkId, String date, String time) throws SQLException {
         PreparedStatement ps = conn.prepareStatement(
             "SELECT COUNT(*) " +
@@ -436,6 +658,13 @@ public class DatabaseController {
 
         return exists;
     }
+    /**
+     * Expires pending waitlist offers whose confirmation time has passed.
+     * The method updates both the order status and the waitlist status to expired.
+     *
+     * @return the number of expired waitlist offers
+     * @throws SQLException if the update operation fails
+     */
     public int expireOldWaitlistOffers() throws SQLException {
         PreparedStatement ps = conn.prepareStatement(
             "UPDATE orders o " +
@@ -452,6 +681,18 @@ public class DatabaseController {
 
         return rows;
     }
+    
+    /**
+     * Promotes eligible waitlist orders for a specific park, date, and time slot.
+     * Orders are promoted according to their waitlist position if enough capacity is available.
+     * A promoted order becomes pending and receives a notification that must be confirmed within one hour.
+     *
+     * @param parkId the park identifier
+     * @param date the requested visit date
+     * @param time the requested visit time
+     * @return the number of promoted waitlist orders
+     * @throws SQLException if the promotion process fails
+     */
     public int promoteNextWaitlistForSlot(int parkId, String date, String time) throws SQLException {
         int promoted = 0;
         String normalizedTime = normalizeTime(time);
@@ -524,6 +765,13 @@ public class DatabaseController {
 
         return promoted;
     }
+    /**
+     * Processes all active waiting lists in the system.
+     * The method finds future waiting list slots and tries to promote eligible orders for each slot.
+     *
+     * @return the total number of promoted waitlist orders
+     * @throws SQLException if the waitlist processing fails
+     */
     public int processWaitingLists() throws SQLException {
         int promoted = 0;
 
@@ -551,6 +799,14 @@ public class DatabaseController {
 
         return promoted;
     }
+    /**
+     * Cancels an order and then attempts to promote the next eligible waitlist orders
+     * for the same park, date, and time slot.
+     *
+     * @param orderId the order identifier to cancel
+     * @return the number of waitlist orders promoted after the cancellation
+     * @throws SQLException if the cancellation or waitlist processing fails
+     */
     public int cancelOrderAndProcessWaitlist(int orderId) throws SQLException {
         PreparedStatement getOrder = conn.prepareStatement(
             "SELECT park_id, visit_date, visit_time FROM orders WHERE order_id = ?"
@@ -586,6 +842,14 @@ public class DatabaseController {
 
         return promoteNextWaitlistForSlot(parkId, date, time);
     }
+    /**
+     * Confirms a pending waitlist offer.
+     * The method changes the order status to confirmed and the waitlist status to confirmed.
+     *
+     * @param orderId the order identifier of the pending waitlist offer
+     * @return true if the waitlist offer was confirmed, otherwise false
+     * @throws SQLException if the confirmation update fails
+     */
     public boolean confirmWaitlistOffer(int orderId) throws SQLException {
         PreparedStatement ps = conn.prepareStatement(
             "UPDATE orders o " +
@@ -602,6 +866,12 @@ public class DatabaseController {
 
         return rows > 0;
     }
+    /**
+     * Cancels the waitlist record of a specific order.
+     *
+     * @param orderId the order identifier whose waitlist record should be cancelled
+     * @throws SQLException if the waitlist update fails
+     */
     public void cancelWaitlistRecord(int orderId) throws SQLException {
         PreparedStatement ps = conn.prepareStatement(
             "UPDATE waitlist " +
@@ -615,6 +885,17 @@ public class DatabaseController {
         ps.close();
     }
     // === PARAMETER REQUESTS ===
+    /**
+     * Creates a new park parameter change request.
+     * The request is stored as pending until it is approved or rejected by the department manager.
+     *
+     * @param parkId the park identifier
+     * @param paramName the name of the parameter to change
+     * @param oldVal the current parameter value
+     * @param newVal the requested new parameter value
+     * @param requestedBy the employee ID of the park manager who submitted the request
+     * @throws SQLException if the request creation fails
+     */
     public void createParameterRequest(int parkId, String paramName, double oldVal, double newVal, int requestedBy) throws SQLException {
         PreparedStatement ps = conn.prepareStatement(
             "INSERT INTO parameter_requests (park_id, parameter_name, old_value, new_value, status, requested_by) VALUES (?,?,?,?,?,?)");
@@ -623,7 +904,13 @@ public class DatabaseController {
         ps.executeUpdate(); ps.close();
     }
     
-    
+    /**
+     * Calculates the total number of walk-in visitors recorded today for a specific park.
+     *
+     * @param parkId the park identifier
+     * @return the number of walk-in visitors recorded today
+     * @throws SQLException if the walk-in query fails
+     */
     public int getWalkinsToday(int parkId) throws SQLException {
         PreparedStatement ps = conn.prepareStatement(
             "SELECT COALESCE(SUM(num_visitors), 0) AS total FROM park_visits " +
@@ -636,6 +923,12 @@ public class DatabaseController {
         return total;
     }
 
+    /**
+     * Retrieves all pending park parameter change requests.
+     *
+     * @return a list of pending parameter request rows
+     * @throws SQLException if the request query fails
+     */
     public ArrayList<ArrayList<String>> getPendingParameterRequests() throws SQLException {
         ArrayList<ArrayList<String>> requests = new ArrayList<>();
         try (Statement st = conn.createStatement();
@@ -652,6 +945,14 @@ public class DatabaseController {
         return requests;
     }
 
+    /**
+     * Approves a park parameter change request and applies the requested value to the park.
+     * The method validates the requested value before updating the park parameters.
+     *
+     * @param requestId the parameter request identifier
+     * @param approvedBy the employee ID of the department manager who approved the request
+     * @throws SQLException if the approval or parameter update fails
+     */
     public void approveParameterRequest(int requestId, int approvedBy) throws SQLException {
         PreparedStatement ps = conn.prepareStatement("SELECT * FROM parameter_requests WHERE request_id = ?");
         ps.setInt(1, requestId); ResultSet rs = ps.executeQuery();
@@ -671,9 +972,14 @@ public class DatabaseController {
     }
 
     /**
-     * Validates a parameter change against business rules.
-     * Reads current park values and checks the proposed new value.
-     * Returns null if valid, or an error message if invalid.
+     * Validates a requested park parameter value according to business rules.
+     * The method checks the proposed value together with the current park values.
+     *
+     * @param parkId the park identifier
+     * @param param the name of the parameter being changed
+     * @param newVal the requested new value
+     * @return null if the value is valid, otherwise an error message
+     * @throws SQLException if the park data cannot be loaded
      */
     public String validateParameterValue(int parkId, String param, double newVal) throws SQLException {
         Park park = getParkById(parkId);
@@ -700,12 +1006,32 @@ public class DatabaseController {
         return null; // valid
     }
 
+    /**
+     * Rejects a pending park parameter change request.
+     *
+     * @param requestId the parameter request identifier
+     * @param rejectedBy the employee ID of the department manager who rejected the request
+     * @throws SQLException if the rejection update fails
+     */
     public void rejectParameterRequest(int requestId, int rejectedBy) throws SQLException {
         PreparedStatement ps = conn.prepareStatement("UPDATE parameter_requests SET status = 'rejected', approved_by = ? WHERE request_id = ?");
         ps.setInt(1, rejectedBy); ps.setInt(2, requestId); ps.executeUpdate(); ps.close();
     }
 
     // === PROMOTIONS ===
+    /**
+     * Creates a new promotion request for a park.
+     * The promotion is stored with pending status until it is approved or rejected
+     * by the department manager.
+     *
+     * @param parkId the park identifier
+     * @param discount the promotion discount percentage
+     * @param startDate the promotion start date
+     * @param endDate the promotion end date
+     * @param desc the promotion description
+     * @param requestedBy the employee ID of the park manager who requested the promotion
+     * @throws SQLException if the promotion request creation fails
+     */
     public void createPromotion(int parkId, double discount, String startDate, String endDate, String desc, int requestedBy) throws SQLException {
         PreparedStatement ps = conn.prepareStatement(
             "INSERT INTO promotions (park_id, discount_percentage, start_date, end_date, description, status, requested_by) VALUES (?,?,?,?,?,?,?)");
@@ -714,6 +1040,12 @@ public class DatabaseController {
         ps.executeUpdate(); ps.close();
     }
 
+    /**
+     * Retrieves all pending promotion requests.
+     *
+     * @return a list of pending promotion request rows
+     * @throws SQLException if the promotion query fails
+     */
     public ArrayList<ArrayList<String>> getPendingPromotions() throws SQLException {
         ArrayList<ArrayList<String>> promos = new ArrayList<>();
         try (Statement st = conn.createStatement();
@@ -731,17 +1063,44 @@ public class DatabaseController {
         return promos;
     }
 
+    /**
+     * Approves a pending promotion request.
+     *
+     * @param promoId the promotion request identifier
+     * @param approvedBy the employee ID of the department manager who approved the promotion
+     * @throws SQLException if the approval update fails
+     */
     public void approvePromotion(int promoId, int approvedBy) throws SQLException {
         PreparedStatement ps = conn.prepareStatement("UPDATE promotions SET status = 'approved', approved_by = ? WHERE promo_id = ?");
         ps.setInt(1, approvedBy); ps.setInt(2, promoId); ps.executeUpdate(); ps.close();
     }
 
+    /**
+     * Rejects a pending promotion request.
+     *
+     * @param promoId the promotion request identifier
+     * @param rejectedBy the employee ID of the department manager who rejected the promotion
+     * @throws SQLException if the rejection update fails
+     */
     public void rejectPromotion(int promoId, int rejectedBy) throws SQLException {
         PreparedStatement ps = conn.prepareStatement("UPDATE promotions SET status = 'rejected', approved_by = ? WHERE promo_id = ?");
         ps.setInt(1, rejectedBy); ps.setInt(2, promoId); ps.executeUpdate(); ps.close();
     }
 
     // === REPORTS ===
+    /**
+     * Generates a formatted text report for a specific park, month, and year.
+     * The method supports visit reports, cancellation reports, total visitors reports,
+     * and park usage reports.
+     *
+     * @param reportType the type of report to generate
+     * @param parkId the park identifier
+     * @param month the report month
+     * @param year the report year
+     * @param generatedBy the employee ID of the report requester
+     * @return the generated report as formatted text
+     * @throws SQLException if the report generation query fails
+     */
     public String generateReport(String reportType, int parkId, int month, int year, int generatedBy) throws SQLException {
         StringBuilder sb = new StringBuilder();
         java.sql.Date startDate = java.sql.Date.valueOf(String.format("%d-%02d-01", year, month));
@@ -902,6 +1261,17 @@ public class DatabaseController {
     }
 
     // === SAVE REPORT ===
+    /**
+     * Saves a generated report in the database.
+     *
+     * @param parkId the park identifier
+     * @param reportType the report type
+     * @param generatedBy the employee ID of the report creator
+     * @param month the report month
+     * @param year the report year
+     * @param reportData the report content to save
+     * @throws SQLException if the report save operation fails
+     */
     public void saveReport(int parkId, String reportType, int generatedBy, int month, int year, String reportData) throws SQLException {
         PreparedStatement ps = conn.prepareStatement(
             "INSERT INTO reports (park_id, report_type, generated_by, report_month, report_year, report_data) VALUES (?,?,?,?,?,?)");
@@ -912,6 +1282,13 @@ public class DatabaseController {
     }
 
     // === HELPERS ===
+    /**
+     * Builds an Order object from the current row of a ResultSet.
+     *
+     * @param rs the result set positioned on an order row
+     * @return the extracted order object
+     * @throws SQLException if reading order data from the result set fails
+     */
     private Order extractOrder(ResultSet rs) throws SQLException {
         Order o = new Order();
         o.setOrderId(rs.getInt("order_id")); o.setVisitorId(rs.getString("visitor_id"));
@@ -928,6 +1305,13 @@ public class DatabaseController {
         return o;
     }
 
+    /**
+     * Builds a GeneralParkWorker object from the current row of a ResultSet.
+     *
+     * @param rs the result set positioned on an employee row
+     * @return the extracted worker object
+     * @throws SQLException if reading worker data from the result set fails
+     */
     private GeneralParkWorker extractWorker(ResultSet rs) throws SQLException {
         GeneralParkWorker w = new GeneralParkWorker();
         w.setEmployeeId(rs.getInt("employee_id")); w.setFirstName(rs.getString("first_name"));
@@ -939,6 +1323,18 @@ public class DatabaseController {
 
     // Atomic booking: checks availability and creates the order as ONE locked operation
     // so two simultaneous clients cannot both book the last spot (prevents overbooking).
+    /**
+     * Atomically checks park availability and creates a new booking order.
+     * <p>
+     * Synchronized to prevent race conditions when multiple clients book simultaneously.
+     * If the park is full, this method throws or returns null depending on capacity check.
+     * The confirmation code is generated as a UUID-based string.
+     * </p>
+     *
+     * @param order the order details provided by the client
+     * @return the saved {@link common.Order} with assigned {@code orderId} and {@code confirmationCode}
+     * @throws java.sql.SQLException if a database error occurs
+     */
     public synchronized Order bookOrderAtomic(Order order) throws SQLException {
         int avail = checkAvailability(order.getParkId(), order.getVisitDate(), order.getVisitTime());
         if (avail >= order.getNumVisitors()) {
@@ -948,7 +1344,19 @@ public class DatabaseController {
         return null; // not enough room
     }
 
-    // Atomic walk-in: same idea for walk-in entries against the gap.
+    
+    /**
+     * Atomically checks walk-in capacity and records a walk-in visit.
+     * <p>
+     * Synchronized to prevent concurrent walk-ins from exceeding {@code gap_for_walkins}.
+     * Uses the actual {@code current_visitors} from the database, not cached values.
+     * </p>
+     *
+     * @param order the walk-in order details
+     * @param park  the target park
+     * @return {@code true} if the walk-in was successfully recorded; {@code false} if park is full
+     * @throws java.sql.SQLException if a database error occurs
+     */
     public synchronized boolean walkInAtomic(Order order, Park park) throws SQLException {
         // Check 1: prevent same visitor from doing multiple walk-ins today at same park
         if (hasActiveWalkInToday(order.getParkId(), order.getVisitorId())) {
@@ -968,8 +1376,16 @@ public class DatabaseController {
         return false;
     }
 
-    // Returns true if this visitor is currently inside the park (walk-in, no exit yet)
-    // Only rejects if exit_time IS NULL — allows re-entry after exit
+    
+    /**
+     * Checks whether a visitor currently has an active walk-in visit today.
+     * Only visits without an exit time are considered active.
+     *
+     * @param parkId the park identifier
+     * @param visitorId the visitor ID number
+     * @return true if the visitor has an active walk-in visit today, otherwise false
+     * @throws SQLException if the active walk-in query fails
+     */
     public boolean hasActiveWalkInToday(int parkId, String visitorId) throws SQLException {
         PreparedStatement ps = conn.prepareStatement(
             "SELECT COUNT(*) FROM park_visits " +
@@ -983,7 +1399,14 @@ public class DatabaseController {
     }
 
 
-    // Marks a day-before reminder as confirmed so the order is NOT auto-cancelled
+    /**
+     * Confirms a day-before visit reminder.
+     * A confirmed reminder prevents the order from being automatically cancelled.
+     *
+     * @param orderId the order identifier
+     * @return true if the reminder was confirmed, otherwise false
+     * @throws SQLException if the reminder confirmation update fails
+     */
     public boolean confirmReminder(int orderId) throws SQLException {
         PreparedStatement ps = conn.prepareStatement(
             "UPDATE orders SET reminder_confirmed = TRUE " +
@@ -995,7 +1418,13 @@ public class DatabaseController {
     }
 
 
-    // Returns the numeric guide_id for a guide's national ID, or -1 if not a guide
+    /**
+     * Retrieves the guide identifier for a given national ID number.
+     *
+     * @param idNumber the guide national ID number
+     * @return the guide ID, or -1 if the ID does not belong to a registered guide
+     * @throws SQLException if the guide lookup fails
+     */
     public int getGuideIdByIdNumber(String idNumber) throws SQLException {
         PreparedStatement ps = conn.prepareStatement("SELECT guide_id FROM guides WHERE id_number = ?");
         ps.setString(1, idNumber);
@@ -1006,7 +1435,14 @@ public class DatabaseController {
     }
 
 
-    // Returns the best APPROVED promotion discount % active on the visit date for a park (0 if none)
+    /**
+     * Retrieves the highest approved promotion discount that is active for a park on a given date.
+     *
+     * @param parkId the park identifier
+     * @param visitDate the requested visit date
+     * @return the best active discount percentage, or 0 if no approved promotion is active
+     * @throws SQLException if the promotion lookup fails
+     */
     public double getActivePromotionDiscount(int parkId, String visitDate) throws SQLException {
         PreparedStatement ps = conn.prepareStatement(
             "SELECT MAX(discount_percentage) AS best FROM promotions " +
@@ -1022,6 +1458,19 @@ public class DatabaseController {
 
     // Returns unread reminder + waitlist_available notifications for a traveler
     // Uses visitor_id via join to orders table
+    /**
+     * Returns all unread notifications for the given traveler.
+     * <p>
+     * Fetches {@code reminder}, {@code waitlist_available}, and {@code reminder_expired}
+     * notification records that are linked to the traveler's orders and have
+     * {@code is_read = FALSE}. Each row contains 9 String fields:
+     * notificationId, orderId, type, message, parkName, date, time, visitors, orderStatus.
+     * </p>
+     *
+     * @param visitorId the traveler's national ID
+     * @return list of notification rows (each row is a 9-element String list)
+     * @throws java.sql.SQLException if a database error occurs
+     */
     public java.util.ArrayList<java.util.ArrayList<String>> getUnreadNotifications(String visitorId) throws SQLException {
         java.util.ArrayList<java.util.ArrayList<String>> list = new java.util.ArrayList<>();
         PreparedStatement ps = conn.prepareStatement(
@@ -1054,7 +1503,12 @@ public class DatabaseController {
         return list;
     }
 
-    // Mark a specific notification as read (after user sees the popup)
+    /**
+     * Marks a specific notification as read after it is displayed to the traveler.
+     *
+     * @param notificationId the notification identifier
+     * @throws SQLException if the notification update fails
+     */
     public void markNotificationRead(int notificationId) throws SQLException {
         PreparedStatement ps = conn.prepareStatement(
             "UPDATE notifications SET is_read = TRUE WHERE notification_id = ?");
@@ -1064,7 +1518,14 @@ public class DatabaseController {
     }
 
 
-    // Returns order by confirmation code (for park worker entrance using code instead of ID)
+    /**
+     * Retrieves an order by its confirmation code.
+     * This method is used by park workers during entrance control.
+     *
+     * @param code the order confirmation code
+     * @return the matching order, or null if no order was found
+     * @throws SQLException if the order lookup fails
+     */
     public Order getOrderByConfirmationCode(String code) throws SQLException {
         PreparedStatement ps = conn.prepareStatement(
             "SELECT o.*, p.park_name FROM orders o JOIN parks p ON o.park_id = p.park_id " +
@@ -1118,7 +1579,12 @@ public class DatabaseController {
     }
 
 
-    /** Auto-complete in_park visits where entry_time > estimated_visit_duration hours ago */
+    /**
+     * Automatically completes visits that stayed in the park longer than the estimated visit duration.
+     * The method updates the order status, sets an exit time, and decreases the current park visitors count.
+     * @return the number of visits that were automatically completed
+     * @throws SQLException if the auto-complete update fails
+     */
     public int autoCompleteExpiredVisits() throws SQLException {
         // Find expired in-park visits
         PreparedStatement ps = conn.prepareStatement(
@@ -1156,6 +1622,13 @@ public class DatabaseController {
         return count;
     }
 
+    /**
+     * Retrieves an employee by employee ID.
+     *
+     * @param employeeId the employee ID as text
+     * @return the matching employee, or null if the ID is invalid or no employee was found
+     * @throws SQLException if the employee lookup fails
+     */
     public GeneralParkWorker getEmployeeById(String employeeId) throws SQLException {
         try {
             int empId = Integer.parseInt(employeeId);
@@ -1172,6 +1645,88 @@ public class DatabaseController {
         }
     }
 
+    /**
+     * Retrieves the currently active in-park visit for a traveler.
+     *
+     * @param visitorId the traveler ID number
+     * @return the active visit order, or null if the traveler has no active visit
+     * @throws SQLException if the active visit query fails
+     */
+    public Order getActiveVisit(String visitorId) throws SQLException {
+        PreparedStatement ps = conn.prepareStatement(
+            "SELECT o.*, p.park_name FROM orders o " +
+            "JOIN parks p ON o.park_id = p.park_id " +
+            "WHERE o.visitor_id = ? AND o.status = 'in_park' LIMIT 1");
+        ps.setString(1, visitorId);
+        ResultSet rs = ps.executeQuery();
+        Order order = null;
+        if (rs.next()) {
+            order = new Order();
+            order.setOrderId(rs.getInt("order_id"));
+            order.setVisitorId(rs.getString("visitor_id"));
+            order.setParkId(rs.getInt("park_id"));
+            order.setParkName(rs.getString("park_name"));
+            order.setVisitDate(rs.getString("visit_date"));
+            order.setVisitTime(rs.getString("visit_time"));
+            order.setNumVisitors(rs.getInt("num_visitors"));
+            order.setStatus(rs.getString("status"));
+            order.setConfirmationCode(rs.getString("confirmation_code"));
+            order.setOrderType(rs.getString("order_type"));
+        }
+        rs.close(); ps.close();
+        return order;
+    }
+
+    
+    /**
+     * Performs a traveler-initiated self-exit from their active park visit.
+     * <p>
+     * Validates that the order belongs to the given traveler and is currently
+     * {@code in_park}, then delegates to {@link #recordExit(int, String, int)}.
+     * </p>
+     *
+     * @param visitorId the national ID of the logged-in traveler
+     * @return {@code "SUCCESS"}, {@code "NO_ACTIVE_VISIT"}, or {@code "ALREADY_EXITED"}
+     * @throws java.sql.SQLException if a database error occurs
+     */
+    public String travelerExit(String visitorId) throws SQLException {
+        // Step 1: verify order belongs to traveler and is in_park
+        PreparedStatement ps = conn.prepareStatement(
+            "SELECT o.order_id, o.park_id FROM orders o " +
+            "WHERE o.visitor_id = ? AND o.status = 'in_park' LIMIT 1");
+        ps.setString(1, visitorId);
+        ResultSet rs = ps.executeQuery();
+        if (!rs.next()) {
+            rs.close(); ps.close();
+            return "NO_ACTIVE_VISIT";
+        }
+        int parkId = rs.getInt("park_id");
+        rs.close(); ps.close();
+
+        // Step 2: verify park_visit has no exit_time (prevent duplicate)
+        PreparedStatement ps2 = conn.prepareStatement(
+            "SELECT visit_id FROM park_visits " +
+            "WHERE park_id = ? AND visitor_id = ? AND exit_time IS NULL LIMIT 1");
+        ps2.setInt(1, parkId); ps2.setString(2, visitorId);
+        ResultSet rs2 = ps2.executeQuery();
+        boolean hasActiveVisit = rs2.next();
+        rs2.close(); ps2.close();
+        if (!hasActiveVisit) return "ALREADY_EXITED";
+
+        // Step 3: reuse existing recordExit (reads real num_visitors from DB)
+        boolean ok = recordExit(parkId, visitorId, 0); // 0 is ignored — real value read from DB
+        return ok ? "SUCCESS" : "ALREADY_EXITED";
+    }
+
+    /**
+     * Updates editable subscriber profile details.
+     *
+     * @param idNumber the subscriber national ID number
+     * @param firstName the updated first name
+     * @param lastName the updated last name
+     * @param email the updated email address
+     * @throws SQLException if the subscriber update fails
+     */
     public void updateSubscriberProfile(String idNumber, String firstName, String lastName, String email) throws SQLException {
         PreparedStatement ps = conn.prepareStatement(
             "UPDATE subscribers SET first_name=?, last_name=?, email=? WHERE id_number=?");

@@ -11,6 +11,21 @@ import javafx.scene.control.*;
 import java.net.URL;
 import java.util.*;
 
+/**
+ * JavaFX controller for the Park Parameters screen (ParkManagerParameters.fxml).
+ * <p>
+ * Allows the park manager to view and request changes to the three configurable
+ * park parameters: maximum visitors ({@code max_visitors}), walk-in gap
+ * ({@code gap_for_walkins}), and estimated visit duration ({@code estimated_visit_duration}).
+ * </p>
+ * <p>
+ * Change requests are sent to the department manager for approval via
+ * {@code REQUEST_PARAMETER_CHANGE}. The request is applied to the park only
+ * after the department manager approves it ({@code APPROVE_CHANGE}).
+ * </p>
+ *
+ * @author Group 11
+ */
 public class ParkManagerParametersController implements Initializable, ClientMessageHandler {
     @FXML private Label parkNameLabel, statusLabel;
     @FXML private Label currentMaxVisitors, currentGap, currentStayTime;
@@ -21,6 +36,13 @@ public class ParkManagerParametersController implements Initializable, ClientMes
     private Park currentPark;
     private String currentAction;
 
+    /**
+     * Initializes the park manager parameters screen.
+     * The method prepares the parameter requests table and loads the current park data.
+     *
+     * @param url the location used to resolve relative paths
+     * @param rb the resources used to localize the screen
+     */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         colParam.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().get(0)));
@@ -32,6 +54,10 @@ public class ParkManagerParametersController implements Initializable, ClientMes
         loadParkData();
     }
 
+    /**
+     * Loads the current parameter values for the park managed by the logged-in park manager.
+     * If the server is disconnected or the worker session is missing, an error message is displayed.
+     */
     private void loadParkData() {
         if (!ClientUI.isServerConnected()) {
             showStatus("Server disconnected. Cannot load park parameters.", true);
@@ -47,6 +73,10 @@ public class ParkManagerParametersController implements Initializable, ClientMes
         ClientUI.client.sendMessage(new ClientServerMessage(Command.GET_PARK_DETAILS, w.getParkId()));
     }
 
+    /**
+     * Handles submission of parameter change requests.
+     * The method validates the entered values and sends one request for each changed parameter.
+     */
     @FXML
     private void handleSubmit() {
     	if (!ClientUI.isServerConnected()) {
@@ -101,6 +131,14 @@ public class ParkManagerParametersController implements Initializable, ClientMes
         }).start();
     }
 
+    /**
+     * Sends a single parameter change request to the server for department manager approval.
+     *
+     * @param w the logged-in park manager who submits the request
+     * @param param the database name of the parameter to change
+     * @param oldVal the current parameter value
+     * @param newVal the requested new parameter value
+     */
     private void sendRequest(GeneralParkWorker w, String param, double oldVal, double newVal) {
     	if (!ClientUI.isServerConnected()) {
             showStatus("Server disconnected. Cannot send request.", true);
@@ -119,6 +157,10 @@ public class ParkManagerParametersController implements Initializable, ClientMes
         ClientUI.client.sendMessage(new ClientServerMessage(Command.REQUEST_PARAMETER_CHANGE, params));
     }
 
+    /**
+     * Loads all parameter change requests submitted for the park managed by the logged-in manager.
+     * If the server is disconnected or the worker session is missing, an error message is displayed.
+     */
     private void loadRequests() {
         if (!ClientUI.isServerConnected()) {
             showStatus("Server disconnected. Cannot load parameter requests.", true);
@@ -132,6 +174,13 @@ public class ParkManagerParametersController implements Initializable, ClientMes
         ClientUI.client.sendMessage(new ClientServerMessage(Command.GET_MY_PARAMETER_REQUESTS, w.getParkId()));
     }
 
+    /**
+     * Handles server responses for loading park data, loading parameter requests,
+     * and submitting parameter change requests.
+     * The method updates the parameter labels and requests table according to the current action.
+     *
+     * @param msg the message received from the server
+     */
     @Override
     @SuppressWarnings("unchecked")
     public void handleMessage(ClientServerMessage msg) {
@@ -159,6 +208,13 @@ public class ParkManagerParametersController implements Initializable, ClientMes
             }
         });
     }
+    /**
+     * Displays a status message on the park manager parameters screen.
+     * The message color is changed according to whether it represents an error or success.
+     *
+     * @param msg the message to display
+     * @param error true if the message represents an error, otherwise false
+     */
     private void showStatus(String msg, boolean error) {
         statusLabel.setWrapText(true);
         statusLabel.setMaxWidth(600);
@@ -166,6 +222,11 @@ public class ParkManagerParametersController implements Initializable, ClientMes
         statusLabel.setStyle("-fx-text-fill: " + (error ? "#e94560" : "#34d399") + ";");
     }
 
+    /**
+     * Handles server disconnection by displaying an error message on the screen.
+     *
+     * @param r the reason for the disconnection
+     */
     @Override
     public void onDisconnected(String r) {
         Platform.runLater(() -> {

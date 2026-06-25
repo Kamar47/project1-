@@ -16,6 +16,23 @@ import javafx.stage.Stage;
 import java.net.URL;
 import java.util.*;
 
+/**
+ * JavaFX controller for the Park Manager Reports screen (ParkManagerCreateReport.fxml).
+ * <p>
+ * Allows the park manager to generate and view reports for their park.
+ * Available report types:
+ * </p>
+ * <ul>
+ *   <li><b>Visits report:</b> entry and stay times segmented by visitor type
+ *       (individual/family vs. organized groups).</li>
+ *   <li><b>Cancellations report:</b> cancelled, no-show, and expired orders.</li>
+ *   <li><b>Total visitors report:</b> visitor counts segmented by order type.</li>
+ *   <li><b>Usage report:</b> park capacity utilization over the selected period.</li>
+ * </ul>
+ * <p>Reports are generated for a selected month and year.</p>
+ *
+ * @author Group 11
+ */
 public class ParkManagerCreateReportController implements Initializable, ClientMessageHandler {
     @FXML private ComboBox<String> reportTypeCombo, monthCombo, yearCombo;
     @FXML private Label statusLabel, reportTitleLabel;
@@ -28,6 +45,14 @@ public class ParkManagerCreateReportController implements Initializable, ClientM
     private String lastReportData;
     private ArrayList<ArrayList<String>> savedReports;
 
+    /**
+     * Initializes the park manager report creation screen.
+     * The method prepares the report type, month and year fields,
+     * configures the saved reports table, and checks the server connection.
+     *
+     * @param url the location used to resolve relative paths
+     * @param rb the resources used to localize the screen
+     */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         reportTypeCombo.setItems(FXCollections.observableArrayList("Total Visitors Report", "Usage Report"));
@@ -60,6 +85,10 @@ public class ParkManagerCreateReportController implements Initializable, ClientM
         }
     }
 
+    /**
+     * Requests the saved reports of the logged-in park manager's park from the server.
+     * If the server is disconnected or the worker session is missing, an error message is displayed.
+     */
     @FXML
     private void handleViewSaved() {
         if (!ClientUI.isServerConnected()) {
@@ -76,6 +105,13 @@ public class ParkManagerCreateReportController implements Initializable, ClientM
         ClientUI.client.sendMessage(new ClientServerMessage(Command.GET_ALL_REPORTS, w.getParkId()));
     }
 
+    /**
+     * Opens a popup window that displays a previously saved report.
+     * The method rebuilds the matching chart according to the saved report type
+     * and displays the saved comment if one exists.
+     *
+     * @param report the saved report row received from the server
+     */
     private void openSavedReport(ArrayList<String> report) {
         // report: [id, type, month, year, created, data]
         String reportType = report.get(1);
@@ -216,6 +252,11 @@ public class ParkManagerCreateReportController implements Initializable, ClientM
         popup.show();
     }
 
+    /**
+     * Handles report generation according to the selected report type, month, and year.
+     * The method validates the required selections and sends the matching report request
+     * to the server.
+     */
     @FXML
     private void handleGenerate() {
         if (!ClientUI.isServerConnected()) {
@@ -245,6 +286,10 @@ public class ParkManagerCreateReportController implements Initializable, ClientM
         ClientUI.client.sendMessage(new ClientServerMessage(cmd, params));
     }
 
+    /**
+     * Saves the last generated report to the database.
+     * If a comment was entered, it is appended to the saved report data.
+     */
     @FXML private void handleSave() {
     	if (!ClientUI.isServerConnected()) {
             showStatus("Server disconnected. Cannot save report.", true);
@@ -271,10 +316,20 @@ public class ParkManagerCreateReportController implements Initializable, ClientM
         ClientUI.client.sendMessage(new ClientServerMessage(Command.SAVE_REPORT, params));
     }
 
+    /**
+     * Hides the report display area on the screen.
+     */
     @FXML private void handleClose() {
         reportArea.setVisible(false); reportArea.setManaged(false);
     }
 
+    /**
+     * Handles server responses for generating, saving, and loading park manager reports.
+     * The method opens the generated report window, updates the saved reports table,
+     * or displays the relevant status message according to the current action.
+     *
+     * @param msg the message received from the server
+     */
     @Override
     @SuppressWarnings("unchecked")
     public void handleMessage(ClientServerMessage msg) {
@@ -306,6 +361,13 @@ public class ParkManagerCreateReportController implements Initializable, ClientM
     }
 
     // ========== NEW WINDOW: Total Visitors Pie Chart ==========
+    /**
+     * Opens a popup window that displays the total visitors report.
+     * The method parses the report data, creates a pie chart by visitor type,
+     * and allows the park manager to add a comment before saving.
+     *
+     * @param data the generated total visitors report data received from the server
+     */
     private void openVisitorsReportWindow(String data) {
         Map<String, Integer> typeCounts = new LinkedHashMap<>();
         typeCounts.put("Individual", 0);
@@ -413,6 +475,13 @@ public class ParkManagerCreateReportController implements Initializable, ClientM
     }
 
     // ========== NEW WINDOW: Usage Report ==========
+    /**
+     * Opens a popup window that displays the park usage report.
+     * The method parses the report data, creates a bar chart for full and non-full days,
+     * and allows the park manager to add a comment before saving.
+     *
+     * @param data the generated usage report data received from the server
+     */
     private void openUsageReportWindow(String data) {
         List<String> fullDays = new ArrayList<>();
         List<String> notFullDays = new ArrayList<>();
@@ -484,6 +553,13 @@ public class ParkManagerCreateReportController implements Initializable, ClientM
         popup.setScene(scene);
         popup.show();
     }
+    /**
+     * Displays a status message on the park manager report creation screen.
+     * The message color is changed according to whether it represents an error or success.
+     *
+     * @param msg the message to display
+     * @param error true if the message represents an error, otherwise false
+     */
     private void showStatus(String msg, boolean error) {
         statusLabel.setWrapText(true);
         statusLabel.setMaxWidth(700);
@@ -491,6 +567,11 @@ public class ParkManagerCreateReportController implements Initializable, ClientM
         statusLabel.setStyle("-fx-text-fill: " + (error ? "#e94560" : "#00e676") + ";");
     }
 
+    /**
+     * Handles server disconnection by displaying the disconnection reason on the screen.
+     *
+     * @param r the reason for the disconnection
+     */
     @Override
     public void onDisconnected(String r) { Platform.runLater(() -> statusLabel.setText(r)); }
 }

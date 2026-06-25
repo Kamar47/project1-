@@ -5,9 +5,11 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 
 /**
- * Simple QR code generator for confirmation codes.
- * Generates a visual QR-like pattern from the confirmation code string.
- * This is a display-only simulation — not a scannable QR code.
+ * Utility class for generating a QR-like visual code for order confirmation codes.
+ * <p>
+ * The generated pattern is deterministic and is based on the confirmation code text.
+ * This class creates a display-only simulation and does not generate a real scannable QR code.
+ * </p>
  */
 public class QRCodeGenerator {
 
@@ -17,7 +19,11 @@ public class QRCodeGenerator {
 
     /**
      * Generates a QR-like canvas from a confirmation code string.
-     * The pattern is deterministic — same code always produces same pattern.
+     * The same confirmation code always produces the same visual pattern.
+     *
+     * @param text the confirmation code text used to generate the pattern
+     * @param pixelSize the requested size of the generated canvas in pixels
+     * @return a JavaFX canvas containing the generated QR-like pattern
      */
     public static Canvas generateQR(String text, int pixelSize) {
         int mod = MODULES;
@@ -48,6 +54,15 @@ public class QRCodeGenerator {
         return canvas;
     }
 
+    /**
+     * Builds the boolean grid used for drawing the QR-like pattern.
+     * Finder patterns are added in three corners, and the remaining cells are filled
+     * using a deterministic random pattern based on the input text.
+     *
+     * @param text the confirmation code text used to generate the grid
+     * @param mod the number of modules in each row and column
+     * @return a two-dimensional boolean grid representing filled and empty cells
+     */
     private static boolean[][] buildGrid(String text, int mod) {
         boolean[][] grid = new boolean[mod][mod];
 
@@ -72,6 +87,15 @@ public class QRCodeGenerator {
         return grid;
     }
 
+    /**
+     * Adds a 7x7 finder pattern to the given grid.
+     * Finder patterns are used to visually imitate the corner markers of a QR code.
+     *
+     * @param grid the QR-like grid to update
+     * @param row the starting row of the finder pattern
+     * @param col the starting column of the finder pattern
+     * @param mod the size of the grid
+     */
     private static void addFinderPattern(boolean[][] grid, int row, int col, int mod) {
         // 7x7 finder pattern
         for (int r = 0; r < 7; r++) {
@@ -86,6 +110,15 @@ public class QRCodeGenerator {
         }
     }
 
+    /**
+     * Checks whether a grid cell is located inside one of the finder pattern zones.
+     * These zones are skipped when filling the data region of the QR-like pattern.
+     *
+     * @param r the row index of the cell
+     * @param c the column index of the cell
+     * @param mod the size of the grid
+     * @return true if the cell is inside a finder pattern zone, otherwise false
+     */
     private static boolean isFinderZone(int r, int c, int mod) {
         // Top-left
         if (r < 8 && c < 8) return true;

@@ -12,18 +12,37 @@ import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 
+/**
+ * JavaFX controller for the employee login screen.
+ * <p>
+ * Employees log in with their username and password. The server validates
+ * credentials, checks the {@code is_logged_in} flag to prevent simultaneous
+ * logins, and returns a {@link common.worker.GeneralParkWorker} object.
+ * After login the user is redirected to the appropriate frame based on their role.
+ * </p>
+ *
+ * @author Group 11
+ */
 public class WorkerLoginController implements ClientMessageHandler {
     @FXML private TextField usernameField;
     @FXML private PasswordField passwordField;
     @FXML private Label errorLabel;
     private static GeneralParkWorker loggedInWorker;
 
+    /**
+     * Initializes the employee login screen and registers this controller
+     * as the current client message handler.
+     */
     @FXML
     private void initialize() {
         if (ClientUI.client != null) {
             ClientUI.client.setHandler(this);
         }
     }
+    /**
+     * Handles employee login by validating the username and password fields
+     * and sending a login request to the server.
+     */
     @FXML
     private void handleLogin() {
     	if (!ClientUI.isServerConnected()) {
@@ -38,9 +57,18 @@ public class WorkerLoginController implements ClientMessageHandler {
             ClientServerMessage.packData(user, pass)));
     }
 
+    /**
+     * Closes the employee login window and returns to the previous screen.
+     */
     @FXML
     private void handleBack() { usernameField.getScene().getWindow().hide(); }
 
+    /**
+     * Handles the server response for employee login.
+     * If the login succeeds, the matching frame is opened according to the employee role.
+     *
+     * @param msg the message received from the server
+     */
     @Override
     public void handleMessage(ClientServerMessage msg) {
         Platform.runLater(() -> {
@@ -65,14 +93,29 @@ public class WorkerLoginController implements ClientMessageHandler {
         });
     }
 
+    /**
+     * Handles server disconnection by displaying the disconnection reason on the screen.
+     *
+     * @param reason the reason for the disconnection
+     */
     @Override
     public void onDisconnected(String reason) {
         Platform.runLater(() -> errorLabel.setText(reason));
     }
+    /**
+     * Displays an error message on the employee login screen.
+     *
+     * @param message the error message to display
+     */
     private void showError(String message) {
         errorLabel.setText(message);
         errorLabel.setStyle("-fx-text-fill: #e94560;");
     }
 
+    /**
+     * Returns the employee currently logged in during this client session.
+     *
+     * @return the logged-in employee, or null if no employee is logged in
+     */
     public static GeneralParkWorker getLoggedInWorker() { return loggedInWorker; }
 }

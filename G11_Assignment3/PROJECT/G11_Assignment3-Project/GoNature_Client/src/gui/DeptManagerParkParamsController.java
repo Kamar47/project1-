@@ -17,6 +17,17 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 
+/**
+ * JavaFX controller for the Department Manager Park Parameters screen
+ * (DeptManagerParkParams.fxml).
+ * <p>
+ * Allows the department manager to view the current parameters of all parks
+ * in the system (maximum visitors, walk-in gap, estimated visit duration).
+ * Parameter changes are initiated by park managers and approved here.
+ * </p>
+ *
+ * @author Group 11
+ */
 public class DeptManagerParkParamsController implements Initializable, ClientMessageHandler {
     @FXML private ComboBox<String> parkCombo;
     @FXML private VBox paramsBox;
@@ -24,6 +35,13 @@ public class DeptManagerParkParamsController implements Initializable, ClientMes
     private ArrayList<Park> parks;
     private String currentAction;
 
+    /**
+     * Initializes the department manager park parameters screen.
+     * The method checks the server connection and loads the list of parks from the server.
+     *
+     * @param url the location used to resolve relative paths
+     * @param rb the resources used to localize the screen
+     */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         if (!ClientUI.isServerConnected()) {
@@ -35,6 +53,10 @@ public class DeptManagerParkParamsController implements Initializable, ClientMes
         ClientUI.client.sendMessage(new ClientServerMessage(Command.GET_ALL_PARKS));
     }
 
+    /**
+     * Loads and displays the parameter details for the selected park.
+     * If no park is selected or the server is disconnected, an error message is shown.
+     */
     @FXML
     private void handleGetParams() {
         if (!ClientUI.isServerConnected()) {
@@ -58,6 +80,12 @@ public class DeptManagerParkParamsController implements Initializable, ClientMes
         ClientUI.client.sendMessage(new ClientServerMessage(Command.GET_PARK_DETAILS, selected.getParkId()));
     }
 
+    /**
+     * Handles server responses for loading the park list and selected park details.
+     * The method updates the park combo box or displays the selected park parameters.
+     *
+     * @param msg the message received from the server
+     */
     @Override
     @SuppressWarnings("unchecked")
     public void handleMessage(ClientServerMessage msg) {
@@ -79,12 +107,24 @@ public class DeptManagerParkParamsController implements Initializable, ClientMes
             }
         });
     }
+    /**
+     * Displays a status message on the screen.
+     * The message color is changed according to whether it represents an error or success.
+     *
+     * @param msg the message to display
+     * @param error true if the message represents an error, otherwise false
+     */
     private void showStatus(String msg, boolean error) {
         statusLabel.setWrapText(true);
         statusLabel.setMaxWidth(700);
         statusLabel.setText(msg);
         statusLabel.setStyle("-fx-text-fill: " + (error ? "#e94560" : "#00e676") + ";");
     }
+    /**
+     * Handles server disconnection by displaying an error message to the department manager.
+     *
+     * @param r the reason for the disconnection
+     */
     @Override
     public void onDisconnected(String r) {
         Platform.runLater(() -> {

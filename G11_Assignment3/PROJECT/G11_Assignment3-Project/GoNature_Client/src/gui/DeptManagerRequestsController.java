@@ -19,6 +19,17 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 
+/**
+ * JavaFX controller for the Department Manager Requests screen (DeptManagerRequests.fxml).
+ * <p>
+ * Displays all pending parameter change requests and promotion requests submitted
+ * by park managers. The department manager can approve or reject each request.
+ * Approved parameter changes are immediately applied to the relevant park.
+ * Approved promotions become active and affect pricing for the specified date range.
+ * </p>
+ *
+ * @author Group 11
+ */
 public class DeptManagerRequestsController implements Initializable, ClientMessageHandler {
     @FXML private TableView<ArrayList<String>> paramRequestsTable, promoRequestsTable;
     @FXML private TableColumn<ArrayList<String>, String> colParamId, colParamPark, colParamName, colOldVal, colNewVal, colParamStatus;
@@ -28,6 +39,14 @@ public class DeptManagerRequestsController implements Initializable, ClientMessa
     private ObservableList<ArrayList<String>> promoData = FXCollections.observableArrayList();
     private String currentAction;
 
+    /**
+     * Initializes the department manager requests screen.
+     * The method prepares the parameter requests table, the promotion requests table,
+     * and loads the pending requests from the server.
+     *
+     * @param url the location used to resolve relative paths
+     * @param rb the resources used to localize the screen
+     */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         setupColumn(colParamId, 0); setupColumn(colParamPark, 1); setupColumn(colParamName, 2);
@@ -41,6 +60,12 @@ public class DeptManagerRequestsController implements Initializable, ClientMessa
         loadRequests();
     }
 
+    /**
+     * Configures a table column to display a value from a specific index in the row data.
+     *
+     * @param col the table column to configure
+     * @param index the index of the value to display from each row
+     */
     private void setupColumn(TableColumn<ArrayList<String>, String> col, int index) {
         col.setCellValueFactory(data -> {
             ArrayList<String> row = data.getValue();
@@ -48,6 +73,10 @@ public class DeptManagerRequestsController implements Initializable, ClientMessa
         });
     }
 
+    /**
+     * Loads all pending parameter change requests and promotion requests from the server.
+     * If the server is disconnected, an error message is displayed.
+     */
     @FXML
     public void loadRequests() {
     	if (!ClientUI.isServerConnected()) {
@@ -59,9 +88,20 @@ public class DeptManagerRequestsController implements Initializable, ClientMessa
         ClientUI.client.sendMessage(new ClientServerMessage(Command.GET_CHANGE_REQUESTS));
     }
 
+    /**
+     * Handles approval of the selected parameter change request.
+     */
     @FXML private void handleApproveParam() { processParamRequest("APPROVE"); }
+    /**
+     * Handles rejection of the selected parameter change request.
+     */
     @FXML private void handleRejectParam() { processParamRequest("REJECT"); }
 
+    /**
+     * Processes the selected parameter change request by sending an approve or reject command.
+     *
+     * @param action the requested action, either APPROVE or REJECT
+     */
     private void processParamRequest(String action) {
     	if (!ClientUI.isServerConnected()) {
             showStatus("Server disconnected. Cannot process parameter request.", true);
@@ -79,9 +119,21 @@ public class DeptManagerRequestsController implements Initializable, ClientMessa
         ClientUI.client.sendMessage(new ClientServerMessage(cmd, data));
     }
 
+    /**
+     * Handles approval of the selected promotion request.
+     */
     @FXML private void handleApprovePromo() { processPromoRequest(Command.APPROVE_PROMOTION); }
+    
+    /**
+     * Handles rejection of the selected promotion request.
+     */
     @FXML private void handleRejectPromo() { processPromoRequest(Command.REJECT_PROMOTION); }
 
+    /**
+     * Processes the selected promotion request using the given server command.
+     *
+     * @param cmd the command used to approve or reject the promotion request
+     */
     private void processPromoRequest(Command cmd) {
     	if (!ClientUI.isServerConnected()) {
             showStatus("Server disconnected. Cannot process promotion request.", true);
@@ -98,6 +150,12 @@ public class DeptManagerRequestsController implements Initializable, ClientMessa
         ClientUI.client.sendMessage(new ClientServerMessage(cmd, data));
     }
 
+    /**
+     * Handles server responses for loading, approving, and rejecting requests.
+     * The method updates the tables and status label according to the server response.
+     *
+     * @param msg the message received from the server
+     */
     @Override
     @SuppressWarnings("unchecked")
     public void handleMessage(ClientServerMessage msg) {
@@ -120,12 +178,24 @@ public class DeptManagerRequestsController implements Initializable, ClientMessa
             }
         });
     }
+    /**
+     * Displays a status message on the screen.
+     * The message color is changed according to whether it represents an error or general information.
+     *
+     * @param msg the message to display
+     * @param error true if the message represents an error, otherwise false
+     */
     private void showStatus(String msg, boolean error) {
         statusLabel.setWrapText(true);
         statusLabel.setMaxWidth(600);
         statusLabel.setText(msg);
         statusLabel.setStyle("-fx-text-fill: " + (error ? "#e94560" : "#a0a0b8") + ";");
     }
+    /**
+     * Handles server disconnection by displaying an error message to the department manager.
+     *
+     * @param r the reason for the disconnection
+     */
     @Override
     public void onDisconnected(String r) {
         Platform.runLater(() -> {

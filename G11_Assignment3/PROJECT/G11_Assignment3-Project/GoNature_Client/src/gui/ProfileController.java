@@ -11,6 +11,22 @@ import javafx.scene.control.Button;
 import java.net.URL;
 import java.util.*;
 
+/**
+ * JavaFX controller for the Profile screen (Profile.fxml).
+ * <p>
+ * Displays the account information of the currently logged-in user.
+ * The screen adapts based on context (set via {@link #setContext(String)}):
+ * </p>
+ * <ul>
+ *   <li><b>Traveler context:</b> shows name, ID, email, role, and subscriber status.
+ *       If the traveler is a subscriber, an edit section is shown allowing them to
+ *       update their first name, last name, and email ({@code UPDATE_SUBSCRIBER_PROFILE}).</li>
+ *   <li><b>Worker context:</b> shows employee name, ID, email, role, and park assignment.
+ *       Edit section is hidden.</li>
+ * </ul>
+ *
+ * @author Group 11
+ */
 public class ProfileController implements Initializable, ClientMessageHandler {
     @FXML private Label nameLabel, idLabel, emailLabel, roleLabel, subscriberLabel;
     @FXML private Label statusLabel;
@@ -18,8 +34,21 @@ public class ProfileController implements Initializable, ClientMessageHandler {
     @FXML private Button saveProfileBtn;
 
     private static String context = "traveler";
+    /**
+     * Sets the profile display context.
+     * The context determines whether the screen shows traveler details or worker details.
+     *
+     * @param ctx the profile context, either traveler or worker
+     */
     public static void setContext(String ctx) { context = ctx; }
 
+    /**
+     * Initializes the profile screen according to the selected context.
+     * The method displays either the logged-in traveler profile or the logged-in worker profile.
+     *
+     * @param url the location used to resolve relative paths
+     * @param rb the resources used to localize the screen
+     */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         if ("traveler".equals(context)) {
@@ -30,6 +59,11 @@ public class ProfileController implements Initializable, ClientMessageHandler {
         }
     }
 
+    /**
+     * Shows or hides the editable subscriber profile fields.
+     *
+     * @param v true to show the edit fields, otherwise false
+     */
     private void setEditVisible(boolean v) {
         if (editFirstNameField != null) editFirstNameField.setVisible(v);
         if (editLastNameField  != null) editLastNameField.setVisible(v);
@@ -38,6 +72,10 @@ public class ProfileController implements Initializable, ClientMessageHandler {
         if (statusLabel        != null) statusLabel.setVisible(v);
     }
 
+    /**
+     * Displays the profile details of the currently logged-in traveler.
+     * If the traveler is a subscriber, editable profile fields are prepared.
+     */
     private void showTravelerProfile() {
         Traveler t = TravelerLoginController.getLoggedInTraveler();
         if (t != null) {
@@ -61,6 +99,10 @@ public class ProfileController implements Initializable, ClientMessageHandler {
         }
     }
 
+    /**
+     * Displays the profile details of the currently logged-in worker.
+     * If the worker is assigned to a park, the park details are requested from the server.
+     */
     private void showWorkerProfile() {
         GeneralParkWorker w = WorkerLoginController.getLoggedInWorker();
         if (w != null) {
@@ -81,6 +123,10 @@ public class ProfileController implements Initializable, ClientMessageHandler {
         }
     }
 
+    /**
+     * Handles saving edited subscriber profile details.
+     * The method validates the edited fields and sends an update request to the server.
+     */
     @FXML
     private void handleSaveProfile() {
         Traveler t = TravelerLoginController.getLoggedInTraveler();
@@ -103,6 +149,12 @@ public class ProfileController implements Initializable, ClientMessageHandler {
         ClientUI.client.sendMessage(new ClientServerMessage(Command.UPDATE_SUBSCRIBER_PROFILE, data));
     }
 
+    /**
+     * Converts an internal worker role value into a user-friendly display label.
+     *
+     * @param role the internal worker role value
+     * @return the formatted role label
+     */
     private String formatRole(String role) {
         switch (role) {
             case "park_worker": return "Park Worker";
@@ -113,6 +165,12 @@ public class ProfileController implements Initializable, ClientMessageHandler {
         }
     }
 
+    /**
+     * Handles server responses for profile-related actions.
+     * The method updates worker park details or confirms successful subscriber profile updates.
+     *
+     * @param msg the message received from the server
+     */
     @Override
     public void handleMessage(ClientServerMessage msg) {
         Platform.runLater(() -> {
@@ -134,6 +192,11 @@ public class ProfileController implements Initializable, ClientMessageHandler {
         });
     }
 
+    /**
+     * Handles server disconnection by displaying an error message on the profile screen.
+     *
+     * @param reason the reason for the disconnection
+     */
     @Override
     public void onDisconnected(String reason) {
         Platform.runLater(() -> { subscriberLabel.setText("Server disconnected."); subscriberLabel.setStyle("-fx-text-fill: #e94560;"); });

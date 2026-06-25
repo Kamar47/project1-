@@ -11,18 +11,17 @@ import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 
 /**
- * Controller for the notification popup window.
- * Handles both reminder and waitlist_available notifications.
- *
- * Scenarios:
- *   REMINDER:
- *     - Confirm -> CONFIRM_ORDER (sets reminder_confirmed=TRUE, order stays confirmed)
- *     - Later   -> close popup, notification stays unread so user can confirm from My Orders
- *
- *   WAITLIST_AVAILABLE:
- *     - Confirm -> CONFIRM_ORDER (pending -> confirmed, spot is theirs)
- *     - Later   -> close popup, notification stays unread, 1-hour window still counting
- *                  user can confirm from My Orders before window expires
+ * JavaFX controller for the traveler notification popup window.
+ * <p>
+ * The popup displays reminder, expired reminder, and waitlist availability notifications.
+ * It allows the traveler to confirm the relevant order, acknowledge the message,
+ * postpone handling the notification, and mark the notification as read.
+ * </p>
+ * <ul>
+ *   <li>Reminder notification: confirms an existing visit reminder.</li>
+ *   <li>Reminder expired notification: acknowledges an automatic cancellation message.</li>
+ *   <li>Waitlist availability notification: confirms a pending waitlist offer.</li>
+ * </ul>
  */
 public class NotificationPopupController {
 
@@ -38,8 +37,10 @@ public class NotificationPopupController {
     private String notificationType; // "reminder" or "waitlist_available"
 
     /**
-     * Called by TravelerFrameController after loading the FXML.
-     * row = [notificationId, orderId, type, message, parkName, date, time, visitors, orderStatus]
+     * Loads notification data into the popup and updates the displayed text and buttons
+     * according to the notification type.
+     *
+     * @param row the notification data received from the server
      */
     public void setNotification(java.util.ArrayList<String> row) {
         notificationId  = Integer.parseInt(row.get(0));
@@ -86,6 +87,11 @@ public class NotificationPopupController {
         }
     }
 
+    /**
+     * Handles confirmation of the notification action.
+     * The method marks the notification as read, sends an order confirmation request
+     * when needed, closes the popup, and refreshes the orders screen if it is open.
+     */
     @FXML
     private void handleConfirm() {
         markAsRead();
@@ -97,6 +103,11 @@ public class NotificationPopupController {
         TravelerOrdersController.refreshIfVisible();
     }
 
+    /**
+     * Handles postponing the notification action.
+     * The method marks the notification as read, closes the popup,
+     * and refreshes the orders screen if it is open.
+     */
     @FXML
     private void handleLater() {
         // Mark as read so polling won't show same popup again.
@@ -107,6 +118,9 @@ public class NotificationPopupController {
         TravelerOrdersController.refreshIfVisible();
     }
 
+    /**
+     * Sends a request to the server to mark the current notification as read.
+     */
     private void markAsRead() {
         try {
             ClientUI.client.sendMessage(new ClientServerMessage(Command.MARK_NOTIFICATION_READ, notificationId));
@@ -115,6 +129,9 @@ public class NotificationPopupController {
         }
     }
 
+    /**
+     * Closes the notification popup window.
+     */
     private void closePopup() {
         Stage stage = (Stage) confirmBtn.getScene().getWindow();
         stage.close();

@@ -19,6 +19,26 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 
+/**
+ * JavaFX controller for the Park Entrance Control screen (ParkWorkerEntranceControl.fxml).
+ * <p>
+ * Used by park workers to admit visitors who hold a confirmed booking.
+ * The worker enters the visitor's confirmation code (or scans the QR code).
+ * The server validates the order (status must be {@code confirmed}, visit date must be today)
+ * and, if valid:
+ * </p>
+ * <ol>
+ *   <li>Creates a {@code park_visits} record with the entry time.</li>
+ *   <li>Sets the order status to {@code in_park}.</li>
+ *   <li>Increments {@code parks.current_visitors}.</li>
+ * </ol>
+ * <p>
+ * An invoice alert is shown to the worker displaying the total amount due
+ * for the entire group, calculated according to the pricing model.
+ * </p>
+ *
+ * @author Group 11
+ */
 public class ParkWorkerEntranceControlController implements Initializable, ClientMessageHandler {
     @FXML private TextField visitorIdField, exitIdField, exitCountField;
     @FXML private Label statusLabel, exitStatusLabel;
@@ -27,9 +47,19 @@ public class ParkWorkerEntranceControlController implements Initializable, Clien
     private Order foundOrder;
     private String currentAction;
 
+    /**
+     * Initializes the park entrance control screen.
+     *
+     * @param url the location used to resolve relative paths
+     * @param rb the resources used to localize the screen
+     */
     @Override
     public void initialize(URL url, ResourceBundle rb) {}
 
+    /**
+     * Handles the check action for a visitor ID or confirmation code.
+     * The method validates the input and requests the matching order details from the server.
+     */
     @FXML
     private void handleCheck() {
         if (!ClientUI.isServerConnected()) {
@@ -53,6 +83,10 @@ public class ParkWorkerEntranceControlController implements Initializable, Clien
         }
     }
 
+    /**
+     * Approves visitor entry for the selected valid booking.
+     * The method sends the entry details to the server and updates the visit status.
+     */
     @FXML
     private void handleApproveEntry() {
     	if (!ClientUI.isServerConnected()) {
@@ -71,6 +105,9 @@ public class ParkWorkerEntranceControlController implements Initializable, Clien
         ClientUI.client.sendMessage(new ClientServerMessage(Command.PROCESS_ENTRY, data));
     }
 
+    /**
+     * Denies the current entry request and clears the displayed order details.
+     */
     @FXML
     private void handleDeny() {
         orderInfoBox.setVisible(false);
@@ -79,6 +116,10 @@ public class ParkWorkerEntranceControlController implements Initializable, Clien
         foundOrder = null;
     }
 
+    /**
+     * Handles visitor exit from the park.
+     * The method validates the visitor ID and exit count, then sends an exit request to the server.
+     */
     @FXML
     private void handleExit() {
     	if (!ClientUI.isServerConnected()) {
@@ -101,16 +142,37 @@ public class ParkWorkerEntranceControlController implements Initializable, Clien
         ClientUI.client.sendMessage(new ClientServerMessage(Command.PROCESS_EXIT, data));
     }
 
+    /**
+     * Displays a status message for the entrance control section.
+     * The message color is changed according to whether it represents an error or success.
+     *
+     * @param msg the message to display
+     * @param error true if the message represents an error, otherwise false
+     */
     private void showStatus(String msg, boolean error) {
         statusLabel.setText(msg);
         statusLabel.setStyle("-fx-text-fill: " + (error ? "#e94560" : "#00e676") + ";");
     }
 
+    /**
+     * Displays a status message for the exit processing section.
+     * The message color is changed according to whether it represents an error or success.
+     *
+     * @param msg the message to display
+     * @param error true if the message represents an error, otherwise false
+     */
     private void showExitStatus(String msg, boolean error) {
         exitStatusLabel.setText(msg);
         exitStatusLabel.setStyle("-fx-text-fill: " + (error ? "#e94560" : "#00e676") + ";");
     }
 
+    /**
+     * Handles server responses for checking bookings, approving entry, and processing exit.
+     * The method displays valid booking details, shows invoice information after entry approval,
+     * and updates exit status messages.
+     *
+     * @param msg the message received from the server
+     */
     @Override
     @SuppressWarnings("unchecked")
     public void handleMessage(ClientServerMessage msg) {
@@ -224,6 +286,11 @@ public class ParkWorkerEntranceControlController implements Initializable, Clien
         });
     }
 
+    /**
+     * Handles server disconnection by displaying the disconnection reason on the screen.
+     *
+     * @param reason the reason for the disconnection
+     */
     @Override
     public void onDisconnected(String reason) { Platform.runLater(() -> showStatus(reason, true)); }
 }

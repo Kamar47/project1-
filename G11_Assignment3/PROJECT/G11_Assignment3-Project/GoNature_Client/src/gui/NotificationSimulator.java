@@ -9,11 +9,24 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
 /**
- * Simulates email/SMS notifications as popup windows.
- * As per spec: "סימולציה של המשלוח, שתכלול הצגת הודעה מתפרצת למשתמש"
+ * Utility class for simulating email and SMS notifications in the GoNature client.
+ * <p>
+ * The project does not require real email or SMS sending. Instead, required messages
+ * are displayed as popup windows that include the notification type, recipient,
+ * subject, and message body.
+ * </p>
  */
 public class NotificationSimulator {
 
+	/**
+	 * Displays a simulated email or SMS notification as a popup window.
+	 * The popup represents the notification that would be sent to the user in a real system.
+	 *
+	 * @param type the notification type, such as Email or SMS
+	 * @param recipient the email address or phone number of the recipient
+	 * @param subject the notification subject
+	 * @param body the notification message body
+	 */
     public static void showNotification(String type, String recipient, String subject, String body) {
         Platform.runLater(() -> {
             Stage popup = new Stage();
@@ -56,6 +69,17 @@ public class NotificationSimulator {
         });
     }
 
+    /**
+     * Simulates sending a booking confirmation notification to the traveler.
+     * The notification includes the park name, visit date and time, and confirmation code.
+     *
+     * @param email the traveler email address
+     * @param phone the traveler phone number
+     * @param confirmationCode the order confirmation code
+     * @param parkName the park name
+     * @param date the visit date
+     * @param time the visit time
+     */
     public static void simulateBookingConfirmation(String email, String phone, String confirmationCode, String parkName, String date, String time) {
         String body = "Your visit to " + parkName + " on " + date + " at " + time + " has been confirmed!\n" +
                 "Confirmation code: " + confirmationCode + "\nPlease keep this code for entry.";
@@ -65,11 +89,29 @@ public class NotificationSimulator {
         }
     }
 
+    /**
+     * Simulates sending a booking cancellation notification to the traveler.
+     *
+     * @param email the traveler email address
+     * @param phone the traveler phone number
+     * @param parkName the park name
+     * @param date the cancelled visit date
+     */
     public static void simulateCancellation(String email, String phone, String parkName, String date) {
         String body = "Your visit to " + parkName + " on " + date + " has been cancelled.";
         showNotification("Email", email, "GoNature - Booking Cancelled", body);
     }
 
+    /**
+     * Simulates sending a visit reminder notification to the traveler.
+     * The reminder asks the traveler to confirm or cancel the booking within two hours.
+     *
+     * @param email the traveler email address
+     * @param phone the traveler phone number
+     * @param parkName the park name
+     * @param date the visit date
+     * @param time the visit time
+     */
     public static void simulateReminder(String email, String phone, String parkName, String date, String time) {
         String body = "Reminder: Your visit to " + parkName + " is tomorrow (" + date + ") at " + time + ".\n" +
                 "Please confirm or cancel within 2 hours, or the booking will be cancelled automatically.";
@@ -79,6 +121,15 @@ public class NotificationSimulator {
         }
     }
 
+    /**
+     * Simulates sending a waitlist availability notification to the traveler.
+     * The notification informs the traveler that a spot is available and must be confirmed within one hour.
+     *
+     * @param email the traveler email address
+     * @param phone the traveler phone number
+     * @param parkName the park name
+     * @param date the visit date
+     */
     public static void simulateWaitlistAvailable(String email, String phone, String parkName, String date) {
         String body = "Good news! A spot has opened up at " + parkName + " on " + date + ".\n" +
                 "You have 1 hour to confirm your booking, or it will pass to the next person in line.";
@@ -88,6 +139,15 @@ public class NotificationSimulator {
         }
     }
 
+    /**
+     * Simulates sending an automatic cancellation notification to the traveler.
+     * This is used when a booking is cancelled because the traveler did not confirm the reminder in time.
+     *
+     * @param email the traveler email address
+     * @param phone the traveler phone number
+     * @param parkName the park name
+     * @param date the cancelled visit date
+     */
     public static void simulateAutoCancel(String email, String phone, String parkName, String date) {
         String body = "Your booking at " + parkName + " on " + date + " has been automatically cancelled " +
                 "because you did not confirm the reminder within 2 hours.";

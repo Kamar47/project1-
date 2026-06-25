@@ -8,16 +8,67 @@ import common.worker.GeneralParkWorker;
 import DB.DatabaseController;
 import ocsf.server.ConnectionToClient;
 
+/**
+ * Stateless dispatcher that handles all client messages on the GoNature server.
+ * <p>
+ * Every message received by {@link BackEndServer} is forwarded to
+ * {@link #handle(common.ClientServerMessage, ocsf.server.ConnectionToClient,
+ * DB.DatabaseController, BackEndServer)}.
+ * The method runs inside a {@code synchronized(DB_LOCK)} block to guarantee
+ * thread safety when multiple clients are connected simultaneously.
+ * </p>
+ *
+ * <p><b>Handled operation groups:</b></p>
+ * <ul>
+ *   <li><b>Authentication:</b> {@code TRAVELER_LOGIN}, {@code WORKER_LOGIN},
+ *       {@code TRAVELER_LOGOUT}, {@code WORKER_LOGOUT}</li>
+ *   <li><b>Booking:</b> {@code CREATE_ORDER}, {@code CANCEL_ORDER},
+ *       {@code CONFIRM_ORDER}, {@code WALKIN_ORDER}, {@code ADD_TO_WAITLIST}</li>
+ *   <li><b>Entry/Exit:</b> {@code PROCESS_ENTRY}, {@code PROCESS_EXIT},
+ *       {@code TRAVELER_EXIT_VISIT}, {@code GET_ORDER_BY_CODE}</li>
+ *   <li><b>Park management:</b> {@code REQUEST_PARAMETER_CHANGE},
+ *       {@code APPROVE_CHANGE}, {@code REJECT_CHANGE},
+ *       {@code CREATE_PROMOTION}, {@code APPROVE_PROMOTION}</li>
+ *   <li><b>Reports:</b> {@code GENERATE_VISITS_REPORT},
+ *       {@code GENERATE_CANCELLATION_REPORT},
+ *       {@code GENERATE_TOTAL_VISITORS_REPORT}, {@code GENERATE_USAGE_REPORT}</li>
+ *   <li><b>Notifications:</b> {@code GET_MY_NOTIFICATIONS},
+ *       {@code MARK_NOTIFICATION_READ}</li>
+ *   <li><b>User management:</b> {@code REGISTER_SUBSCRIBER},
+ *       {@code REGISTER_GUIDE}, {@code UPDATE_SUBSCRIBER_PROFILE},
+ *       {@code LOOKUP_SUBSCRIBER}, {@code GET_ACTIVE_VISIT}</li>
+ * </ul>
+ *
+ * @author Group 11
+ */
 public class MessageHandler {
 
     // Track active traveler sessions — prevent same ID logging in twice
     private static final java.util.Set<String> activeTravelerSessions =
         java.util.Collections.synchronizedSet(new java.util.HashSet<>());
 
+    /**
+     * Releases an active traveler session when the traveler disconnects or logs out.
+     * This allows the same traveler ID to log in again from another client.
+     *
+     * @param travelerId the traveler ID number to release from the active sessions set
+     */
     public static void releaseTravelerSession(String travelerId) {
         if (travelerId != null) activeTravelerSessions.remove(travelerId);
     }
 
+    /**
+     * Dispatches an incoming client message to the appropriate server-side logic.
+     * The method handles authentication, booking, waitlist management, entry and exit,
+     * park management, reports, notifications, and user management commands.
+     * It runs inside a synchronized database lock to protect the shared database connection
+     * when multiple clients send requests at the same time.
+     *
+     * @param msg the message received from the client
+     * @param client the client connection used to send the response
+     * @param db the database controller for this server session
+     * @param server the server instance used for logging server actions
+     */
     public static void handle(ClientServerMessage msg, ConnectionToClient client,
                                DatabaseController db, BackEndServer server) {
         // Synchronize on DB_LOCK: OCSF runs one thread per client.
@@ -447,6 +498,30 @@ public class MessageHandler {
                     respond(client, Command.DATA_RESPONSE, db.getParameterRequestsByPark(reqParkId));
                     break;
 
+                case GET_ACTIVE_VISIT: {
+                    String avId = (String) msg.getData();
+                    Order activeOrder = db.getActiveVisit(avId);
+                    if (activeOrder != null) {
+                        respond(client, Command.DATA_RESPONSE, activeOrder);
+                    } else {
+                        respond(client, Command.FAILURE, "NO_ACTIVE_VISIT");
+                    }
+                    break;
+                }
+
+                case TRAVELER_EXIT_VISIT: {
+                    String exitId = (String) msg.getData();
+                    String result = db.travelerExit(exitId);
+                    if ("SUCCESS".equals(result)) {
+                        respond(client, Command.SUCCESS, "Exit recorded successfully.");
+                    } else if ("ALREADY_EXITED".equals(result)) {
+                        respond(client, Command.FAILURE, "Visit already exited.");
+                    } else {
+                        respond(client, Command.FAILURE, "No active visit found.");
+                    }
+                    break;
+                }
+
                 case LOOKUP_SUBSCRIBER: {
                     String lookupId = (String) msg.getData();
                     // Search subscribers first
@@ -483,6 +558,15 @@ public class MessageHandler {
         } // end synchronized(DB_LOCK)
     }
 
+    /**
+     * Sends a response message to a connected client.
+     * The response is wrapped as a successful ClientServerMessage with the given command and data.
+     *
+     * @param client the client connection that should receive the response
+     * @param cmd the response command
+     * @param data the response data
+     * @throws IOException if the response cannot be sent to the client
+     */
     private static void respond(ConnectionToClient client, Command cmd, Object data) throws IOException {
         client.sendToClient(ClientServerMessage.success(cmd, data));
     }

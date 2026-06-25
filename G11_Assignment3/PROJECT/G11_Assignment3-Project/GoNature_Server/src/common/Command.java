@@ -1,5 +1,25 @@
 package common;
 
+/**
+ * Enumerates all commands used in client-server communication for the GoNature system.
+ * <p>
+ * Each constant represents a specific operation that the client may request or
+ * the server may respond with. Commands are serialized inside {@link ClientServerMessage}
+ * objects and transmitted over TCP using the OCSF framework.
+ * </p>
+ * <ul>
+ *   <li>Login/logout: {@code TRAVELER_LOGIN}, {@code WORKER_LOGIN}, {@code TRAVELER_LOGOUT}, {@code WORKER_LOGOUT}</li>
+ *   <li>Booking: {@code CREATE_ORDER}, {@code CANCEL_ORDER}, {@code CONFIRM_ORDER}, {@code WALKIN_ORDER}</li>
+ *   <li>Entry/Exit: {@code PROCESS_ENTRY}, {@code PROCESS_EXIT}, {@code TRAVELER_EXIT_VISIT}</li>
+ *   <li>Waitlist: {@code ADD_TO_WAITLIST}, {@code REMOVE_FROM_WAITLIST}</li>
+ *   <li>Reports: {@code GENERATE_VISITS_REPORT}, {@code GENERATE_CANCELLATION_REPORT},
+ *       {@code GENERATE_TOTAL_VISITORS_REPORT}, {@code GENERATE_USAGE_REPORT}</li>
+ *   <li>Notifications: {@code GET_MY_NOTIFICATIONS}, {@code MARK_NOTIFICATION_READ}</li>
+ *   <li>Responses: {@code SUCCESS}, {@code FAILURE}, {@code ERROR}, {@code DATA_RESPONSE}</li>
+ * </ul>
+ *
+ * @author Group 11
+ */
 public enum Command {
     CLIENT_CONNECT, CLIENT_DISCONNECT,
     TRAVELER_LOGIN, TRAVELER_LOGOUT, WORKER_LOGIN, WORKER_LOGOUT,
@@ -18,4 +38,5 @@ public enum Command {
     SUCCESS, FAILURE, ERROR, DATA_RESPONSE,
     GET_MY_PROMOTIONS, GET_WALKINS_TODAY, GET_MY_NOTIFICATIONS, MARK_NOTIFICATION_READ, GET_ORDER_BY_CODE, GET_ALTERNATIVE_SLOTS, ALT_SLOTS_RESPONSE,
     UPDATE_SUBSCRIBER_PROFILE, LOOKUP_SUBSCRIBER,
+    GET_ACTIVE_VISIT, TRAVELER_EXIT_VISIT,
 }

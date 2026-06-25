@@ -11,11 +11,28 @@ import javafx.scene.layout.VBox;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+/**
+ * JavaFX controller for the park manager navigation frame (ParkManagerFrame.fxml).
+ * <p>
+ * Provides navigation for park managers. Available screens:
+ * Profile, Park Parameters (view/request changes), Promotions, and Reports.
+ * </p>
+ *
+ * @author Group 11
+ */
 public class ParkManagerFrameController implements Initializable {
     @FXML private BorderPane mainBorderPane;
     @FXML private Label workerNameLabel;
     @FXML private VBox contentArea;
 
+    /**
+     * Initializes the park manager frame.
+     * The method displays the logged-in park manager name and registers a logout action
+     * when the window is closed.
+     *
+     * @param url the location used to resolve relative paths
+     * @param rb the resources used to localize the screen
+     */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         GeneralParkWorker w = WorkerLoginController.getLoggedInWorker();
@@ -34,10 +51,29 @@ public class ParkManagerFrameController implements Initializable {
         });
     }
 
+    /**
+     * Opens the profile screen for the logged-in park manager.
+     */
     @FXML private void showProfile() { ProfileController.setContext("worker"); loadPage("Profile.fxml"); }
+    
+    /**
+     * Opens the park parameters screen for viewing and requesting parameter changes.
+     */
     @FXML private void showParameters() { loadPage("ParkManagerParameters.fxml"); }
+    
+    /**
+     * Opens the report creation screen for the park manager.
+     */
     @FXML private void showCreateReport() { loadPage("ParkManagerCreateReport.fxml"); }
+    
+    /**
+     * Opens the promotions screen for creating and managing park promotions.
+     */
     @FXML private void showPromotions() { loadPage("ParkManagerPromotions.fxml"); }
+    
+    /**
+     * Logs out the currently logged-in park manager and closes the frame window.
+     */
     @FXML private void handleLogout() {
         GeneralParkWorker w = WorkerLoginController.getLoggedInWorker();
 
@@ -49,6 +85,12 @@ public class ParkManagerFrameController implements Initializable {
         mainBorderPane.getScene().getWindow().hide();
     }
 
+    /**
+     * Loads the requested FXML page into the center area of the park manager frame.
+     * If the page cannot be loaded, an error message is displayed instead.
+     *
+     * @param fxml the FXML file name to load
+     */
     private void loadPage(String fxml) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxml));

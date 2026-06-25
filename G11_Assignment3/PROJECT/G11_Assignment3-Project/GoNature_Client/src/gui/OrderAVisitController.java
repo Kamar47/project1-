@@ -9,6 +9,28 @@ import javafx.scene.control.*;
 import java.net.URL;
 import java.util.*;
 
+/**
+ * JavaFX controller for the Order A Visit screen (OrderVisit.fxml).
+ * <p>
+ * Allows a logged-in traveler to book a visit to a nature park. The traveler
+ * selects the park, visit date and time, number of visitors, and order type.
+ * </p>
+ * <p>
+ * Validation rules enforced client-side (and re-validated server-side):
+ * </p>
+ * <ul>
+ *   <li>Individual visit: exactly 1 visitor.</li>
+ *   <li>Organized group: maximum 15 visitors; only registered guides may book.</li>
+ *   <li>Family booking: number of visitors may not exceed the subscriber's registered family size.</li>
+ * </ul>
+ * <p>
+ * If the park is fully booked, the server automatically places the order on the waitlist.
+ * On success, the traveler is shown the {@link OrderConfirmationController} screen with
+ * the confirmation code and QR code.
+ * </p>
+ *
+ * @author Group 11
+ */
 public class OrderAVisitController implements Initializable, ClientMessageHandler {
     @FXML private ComboBox<String> parkCombo, timeCombo, typeCombo;
     @FXML private DatePicker datePicker;
@@ -23,6 +45,16 @@ public class OrderAVisitController implements Initializable, ClientMessageHandle
     private String pendingOrderKey = null;
     private String lastConfirmedOrderKey = null;
 
+    /**
+     * Builds a unique key for the current order details.
+     * The key is used to prevent submitting the same confirmed order more than once.
+     *
+     * @param park the selected park
+     * @param numVisitors the number of visitors in the order
+     * @param email the traveler email address
+     * @param phone the traveler phone number
+     * @return a unique text key that represents the order details
+     */
     private String buildOrderKey(Park park, int numVisitors, String email, String phone) {
         return park.getParkId() + "|" +
                datePicker.getValue() + "|" +
@@ -33,6 +65,14 @@ public class OrderAVisitController implements Initializable, ClientMessageHandle
                phone.trim();
     }
 
+    /**
+     * Initializes the order-a-visit screen.
+     * The method prepares the park, time, visit type, date, price fields,
+     * and loads the available parks from the server.
+     *
+     * @param url the location used to resolve relative paths
+     * @param rb the resources used to localize the screen
+     */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         timeCombo.setItems(FXCollections.observableArrayList("08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00"));
@@ -88,6 +128,10 @@ public class OrderAVisitController implements Initializable, ClientMessageHandle
         ClientUI.client.sendMessage(new ClientServerMessage(Command.GET_ALL_PARKS));
     }
 
+    /**
+     * Updates the displayed visit price according to the selected park,
+     * visit type, number of visitors, subscriber status, and advance payment option.
+     */
     private void updatePrice() {
         if (parks == null || parkCombo.getValue() == null || typeCombo.getValue() == null || visitorsField.getText().isEmpty()) {
             priceLabel.setText("--"); return;
@@ -104,6 +148,11 @@ public class OrderAVisitController implements Initializable, ClientMessageHandle
         } catch (NumberFormatException e) { priceLabel.setText("--"); }
     }
 
+    /**
+     * Handles submission of a new visit order.
+     * The method validates all form fields, builds an order object,
+     * prevents duplicate submissions, and sends the order request to the server.
+     */
     @FXML
     private void handleSubmit() {
         if (isSubmitting) { showError("Order is already being submitted. Please wait."); return; }
@@ -188,7 +237,13 @@ public class OrderAVisitController implements Initializable, ClientMessageHandle
         submitOrder(order, currentOrderKey);
     }
 
-    /** Sends CREATE_ORDER to the server. Used by both handleSubmit() and alternative slot selection. */
+    /**
+     * Sends a create order request to the server.
+     * This method is used both by the regular submit action and by alternative slot selection.
+     *
+     * @param order the order to submit
+     * @param orderKey the unique order key used for duplicate submission prevention
+     */
     private void submitOrder(Order order, String orderKey) {
         pendingOrder  = order;
         currentAction = "CREATE";
@@ -201,12 +256,24 @@ public class OrderAVisitController implements Initializable, ClientMessageHandle
         ClientUI.client.sendMessage(new ClientServerMessage(Command.CREATE_ORDER, order));
     }
 
+    /**
+     * Displays an error message on the order-a-visit screen.
+     *
+     * @param msg the error message to display
+     */
     private void showError(String msg) {
         statusLabel.setWrapText(true);
         statusLabel.setText(msg);
         statusLabel.setStyle("-fx-text-fill: #e94560;");
     }
 
+    /**
+     * Handles server responses related to park loading, order creation,
+     * waitlist registration, and alternative visit slots.
+     * The method updates the screen according to the current action.
+     *
+     * @param msg the message received from the server
+     */
     @Override
     public void handleMessage(ClientServerMessage msg) {
         Platform.runLater(() -> {
@@ -324,12 +391,23 @@ public class OrderAVisitController implements Initializable, ClientMessageHandle
         });
     }
 
+    /**
+     * Handles server disconnection by displaying the disconnection reason on the screen.
+     *
+     * @param reason the reason for the disconnection
+     */
     @Override
     public void onDisconnected(String reason) { Platform.runLater(() -> showError(reason)); }
 
     // ─────────────────────────────────────────────
     // "Park Full" window — non-blocking Stage
     // ─────────────────────────────────────────────
+    /**
+     * Displays a popup window when there is no availability for the requested visit time.
+     * The traveler can choose to join the waiting list, view alternative times, or cancel.
+     *
+     * @param failMsg the failure message received from the server
+     */
     private void showParkFullWindow(String failMsg) {
         javafx.stage.Stage stage = new javafx.stage.Stage();
         stage.setTitle("No Availability");
@@ -395,6 +473,12 @@ public class OrderAVisitController implements Initializable, ClientMessageHandle
     // ─────────────────────────────────────────────
     // Alternative slots window — non-blocking Stage
     // ─────────────────────────────────────────────
+    /**
+     * Displays a popup window with alternative available visit slots.
+     * When the traveler selects a slot, the order date and time are updated and submitted again.
+     *
+     * @param slots the list of alternative slots received from the server
+     */
     private void showAlternativeSlotsWindow(java.util.ArrayList<java.util.ArrayList<String>> slots) {
         if (slots.isEmpty()) {
             javafx.scene.control.Alert a = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
@@ -462,6 +546,12 @@ public class OrderAVisitController implements Initializable, ClientMessageHandle
         stage.show();
     }
 
+    /**
+     * Opens the order confirmation screen after a successful order creation.
+     * The confirmation screen displays the order details, confirmation code, and QR code.
+     *
+     * @param confirmed the confirmed order returned from the server
+     */
     private void showConfirmationScreen(Order confirmed) {
         try {
             javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(

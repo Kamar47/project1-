@@ -11,6 +11,12 @@ public class InputValidation {
     private static final Pattern PHONE_PATTERN =Pattern.compile("^05\\d{8}$");
 	private static final Pattern ID_PATTERN = Pattern.compile("^\\d{1,15}$");
 
+	/**
+	 * Validates an Israeli ID number entered by the user.
+	 *
+	 * @param id the ID number to validate
+	 * @return null if the ID is valid, otherwise an error message
+	 */
     public static String validateId(String id) {
         if (id == null || id.trim().isEmpty()) return "ID number is required.";
         if (!ID_PATTERN.matcher(id.trim()).matches()) return "ID must contain only digits.";
@@ -40,6 +46,12 @@ public class InputValidation {
         return sum % 10 == 0;
     }
 
+    /**
+     * Validates an email address entered by the user.
+     *
+     * @param email the email address to validate
+     * @return null if the email is valid, otherwise an error message
+     */
     public static String validateEmail(String email) {
         if (email == null || email.trim().isEmpty()) {
             return "Email is required.";
@@ -54,6 +66,13 @@ public class InputValidation {
         return null;
     }
 
+    /**
+     * Validates an Israeli mobile phone number.
+     * The method allows numbers with spaces or hyphens and normalizes them before validation.
+     *
+     * @param phone the phone number to validate
+     * @return null if the phone number is valid, otherwise an error message
+     */
     public static String validatePhone(String phone) {
         if (phone == null || phone.trim().isEmpty()) {
             return "Phone number is required.";
@@ -76,6 +95,13 @@ public class InputValidation {
         return null;
     }
 
+    /**
+     * Validates the number of visitors entered by the user.
+     *
+     * @param visitorsStr the number of visitors as text
+     * @param max the maximum allowed number of visitors
+     * @return null if the number is valid, otherwise an error message
+     */
     public static String validateVisitors(String visitorsStr, int max) {
         if (visitorsStr == null || visitorsStr.trim().isEmpty()) return "Number of visitors is required.";
         try {
@@ -86,17 +112,38 @@ public class InputValidation {
         } catch (NumberFormatException e) { return "Visitors must be a whole number."; }
     }
 
+    /**
+     * Validates a selected visit date.
+     * The date must not be empty and must not be in the past.
+     *
+     * @param date the selected date
+     * @return null if the date is valid, otherwise an error message
+     */
     public static String validateDate(LocalDate date) {
         if (date == null) return "Date is required.";
         if (date.isBefore(LocalDate.now())) return "Date cannot be in the past.";
         return null;
     }
 
+    /**
+     * Validates that a required text field is not empty.
+     *
+     * @param value the field value to validate
+     * @param fieldName the name of the field displayed in the error message
+     * @return null if the value is not empty, otherwise an error message
+     */
     public static String validateNotEmpty(String value, String fieldName) {
         if (value == null || value.trim().isEmpty()) return fieldName + " is required.";
         return null;
     }
 
+    /**
+     * Validates that a numeric field contains a positive number.
+     *
+     * @param value the numeric value as text
+     * @param fieldName the name of the field displayed in the error message
+     * @return null if the value is a positive number, otherwise an error message
+     */
     public static String validatePositiveNumber(String value, String fieldName) {
         if (value == null || value.trim().isEmpty()) return fieldName + " is required.";
         try {

@@ -15,6 +15,8 @@
                     style="-fx-background-color: #252538; -fx-text-fill: #e2e8f0; -fx-background-radius: 10; -fx-padding: 11 0; -fx-cursor: hand; -fx-font-size: 13px;"/>
             <Button text="Waiting List" onAction="#showWaitingList" prefWidth="150"
                     style="-fx-background-color: #252538; -fx-text-fill: #e2e8f0; -fx-background-radius: 10; -fx-padding: 11 0; -fx-cursor: hand; -fx-font-size: 13px;"/>
+            <Button text="Exit Visit" onAction="#showExitVisit" prefWidth="150"
+                    style="-fx-background-color: #252538; -fx-text-fill: #e2e8f0; -fx-background-radius: 10; -fx-padding: 11 0; -fx-cursor: hand; -fx-font-size: 13px;"/>
             <VBox VBox.vgrow="ALWAYS"/>
             <Button text="Logout" onAction="#handleLogout" prefWidth="150"
                     style="-fx-background-color: #ef4444; -fx-text-fill: white; -fx-background-radius: 10; -fx-padding: 11 0; -fx-font-weight: bold; -fx-cursor: hand; -fx-font-size: 13px;"/>

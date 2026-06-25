@@ -24,11 +24,35 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 
+/**
+ * JavaFX controller for the traveler's View Orders screen (TravelerOrdersFrame.fxml).
+ * <p>
+ * Displays all orders belonging to the logged-in traveler in a sortable table.
+ * Each order shows its status with a colour-coded label:
+ * </p>
+ * <ul>
+ *   <li>Blue — reserved (reminder not yet sent)</li>
+ *   <li>Amber — action needed (reminder sent, awaiting confirmation)</li>
+ *   <li>Green — confirmed / in park / completed</li>
+ *   <li>Red — cancelled / expired / no-show</li>
+ * </ul>
+ * <p>
+ * The traveler may cancel an eligible order or confirm a pending reminder or
+ * waitlist spot directly from this screen. A static {@link #refreshIfVisible()}
+ * method is called by the notification popup to keep the table up to date.
+ * </p>
+ *
+ * @author Group 11
+ */
 public class TravelerOrdersController implements Initializable, ClientMessageHandler {
 
     // Static reference so NotificationPopupController can trigger a refresh
     private static TravelerOrdersController activeInstance = null;
 
+    /**
+     * Refreshes the traveler orders table if the screen is currently open.
+     * This method is used by notification popups after the traveler responds to a notification.
+     */
     public static void refreshIfVisible() {
         if (activeInstance != null) {
             javafx.application.Platform.runLater(activeInstance::loadOrders);
@@ -49,6 +73,15 @@ public class TravelerOrdersController implements Initializable, ClientMessageHan
     // Init
     // ─────────────────────────────────────────────
 
+    /**
+     * Initializes the traveler orders screen.
+     * The method prepares the orders table, configures the status column,
+     * updates the confirmation button according to the selected order,
+     * and loads the traveler's orders from the server.
+     *
+     * @param url the location used to resolve relative paths
+     * @param rb the resources used to localize the screen
+     */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         colId.setCellValueFactory(new PropertyValueFactory<>("orderId"));
@@ -90,6 +123,13 @@ public class TravelerOrdersController implements Initializable, ClientMessageHan
     // Label + color logic (display only, no DB change)
     // ─────────────────────────────────────────────
 
+    /**
+     * Resolves the display label shown for an order status.
+     * The label may also depend on reminder confirmation flags.
+     *
+     * @param o the order whose status should be displayed
+     * @return the label text to show in the status column
+     */
     private String resolveLabel(Order o) {
         if (o == null) return "";
         String status = o.getStatus();
@@ -113,6 +153,12 @@ public class TravelerOrdersController implements Initializable, ClientMessageHan
         }
     }
 
+    /**
+     * Resolves the text color used for displaying an order status.
+     *
+     * @param o the order whose status color should be resolved
+     * @return the CSS color value for the status text
+     */
     private String resolveColor(Order o) {
         if (o == null) return "#c0c0d8";
         String status = o.getStatus();
@@ -132,9 +178,15 @@ public class TravelerOrdersController implements Initializable, ClientMessageHan
         }
     }
 
-    // Show Confirm button only for:
-    // 1. confirmed + reminder_sent=true + reminder_confirmed=false  (reminder confirmation)
-    // 2. pending (waitlist spot offer)
+    
+    /**
+     * Checks whether the selected order requires traveler confirmation.
+     * Confirmation is required for pending waitlist offers and for confirmed orders
+     * whose reminder was sent but not yet confirmed.
+     *
+     * @param o the order to check
+     * @return true if the order requires confirmation, otherwise false
+     */
     private boolean needsConfirm(Order o) {
         if (o == null) return false;
         String status = o.getStatus();
@@ -143,6 +195,11 @@ public class TravelerOrdersController implements Initializable, ClientMessageHan
         return false;
     }
 
+    /**
+     * Enables or disables the confirmation button according to the selected order.
+     *
+     * @param selected the currently selected order
+     */
     private void updateConfirmButton(Order selected) {
         if (confirmBtn == null) return;
         confirmBtn.setDisable(!needsConfirm(selected));
@@ -152,6 +209,10 @@ public class TravelerOrdersController implements Initializable, ClientMessageHan
     // Actions
     // ─────────────────────────────────────────────
 
+    /**
+     * Loads all orders that belong to the currently logged-in traveler.
+     * If the server is disconnected, an error message is displayed.
+     */
     @FXML
     public void loadOrders() {
         if (!ClientUI.isServerConnected()) { showStatus("Server disconnected.", true); return; }
@@ -161,6 +222,11 @@ public class TravelerOrdersController implements Initializable, ClientMessageHan
         ClientUI.client.sendMessage(new ClientServerMessage(Command.GET_ALL_ORDERS_BY_TRAVELER, id));
     }
 
+    /**
+     * Handles cancellation of the selected order.
+     * The method validates that an order is selected, checks whether it can be cancelled,
+     * asks the traveler for confirmation, and sends a cancellation request to the server.
+     */
     @FXML
     private void handleCancel() {
         if (!ClientUI.isServerConnected()) { showStatus("Server disconnected.", true); return; }
@@ -183,6 +249,10 @@ public class TravelerOrdersController implements Initializable, ClientMessageHan
         }
     }
 
+    /**
+     * Handles confirmation of the selected order.
+     * This is used for confirming a pending waitlist offer or confirming a visit reminder.
+     */
     @FXML
     private void handleConfirm() {
         if (!ClientUI.isServerConnected()) { showStatus("Server disconnected.", true); return; }
@@ -206,6 +276,12 @@ public class TravelerOrdersController implements Initializable, ClientMessageHan
     // Server response
     // ─────────────────────────────────────────────
 
+    /**
+     * Handles server responses for loading, cancelling, and confirming traveler orders.
+     * The method updates the orders table and displays the relevant status message.
+     *
+     * @param msg the message received from the server
+     */
     @Override
     @SuppressWarnings("unchecked")
     public void handleMessage(ClientServerMessage msg) {
@@ -237,11 +313,23 @@ public class TravelerOrdersController implements Initializable, ClientMessageHan
         });
     }
 
+    /**
+     * Handles server disconnection by displaying the disconnection reason on the screen.
+     *
+     * @param reason the reason for the disconnection
+     */
     @Override
     public void onDisconnected(String reason) {
         Platform.runLater(() -> showStatus(reason, true));
     }
 
+    /**
+     * Displays a status message on the traveler orders screen.
+     * The message color is changed according to whether it represents an error or success.
+     *
+     * @param msg the message to display
+     * @param error true if the message represents an error, otherwise false
+     */
     private void showStatus(String msg, boolean error) {
         statusLabel.setText(msg);
         statusLabel.setStyle("-fx-text-fill: " + (error ? "#f87171" : "#34d399") + ";");

@@ -26,6 +26,23 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * JavaFX controller for the main traveler navigation frame (TravelerFrame.fxml).
+ * <p>
+ * This frame wraps all traveler screens and provides the sidebar navigation menu.
+ * It also starts a background notification polling task that queries the server
+ * every 30 seconds for unread notifications (reminders, waitlist availability,
+ * and cancellation notices).
+ * </p>
+ * <p>
+ * When a notification is received, a {@link NotificationPopupController} popup is
+ * displayed. The polling pauses while a popup is open ({@code popupShowing} flag)
+ * to prevent stacking multiple dialogs.
+ * </p>
+ * <p>Navigation options: Profile, Order A Visit, View Orders, Waiting List, Exit Visit.</p>
+ *
+ * @author Group 11
+ */
 public class TravelerFrameController implements Initializable, ClientMessageHandler {
 
     @FXML private BorderPane mainBorderPane;
@@ -38,6 +55,13 @@ public class TravelerFrameController implements Initializable, ClientMessageHand
     // Flag so we don't stack multiple popups if one is already showing
     private boolean popupShowing = false;
 
+    /**
+     * Initializes the main traveler frame.
+     * The method displays the logged-in traveler name and starts notification polling.
+     *
+     * @param url the location used to resolve relative paths
+     * @param rb the resources used to localize the screen
+     */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         Traveler t = TravelerLoginController.getLoggedInTraveler();
@@ -53,6 +77,10 @@ public class TravelerFrameController implements Initializable, ClientMessageHand
     // Polling
     // ─────────────────────────────────────────────
 
+    /**
+     * Starts a background polling task that checks for unread traveler notifications.
+     * The polling is executed periodically while the traveler frame is open.
+     */
     private void startNotificationPolling() {
         pollingScheduler = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread t = new Thread(r, "notification-polling");
@@ -63,6 +91,10 @@ public class TravelerFrameController implements Initializable, ClientMessageHand
         pollingScheduler.scheduleAtFixedRate(this::pollNotifications, 0, 30, TimeUnit.SECONDS);
     }
 
+    /**
+     * Sends a request to the server to retrieve unread notifications for the logged-in traveler.
+     * The method does not send a request if the server is disconnected or a popup is already open.
+     */
     private void pollNotifications() {
         // Safety: don't poll if disconnected or popup already open
         if (!ClientUI.isServerConnected() || popupShowing) return;
@@ -73,6 +105,9 @@ public class TravelerFrameController implements Initializable, ClientMessageHand
         ClientUI.client.sendMessage(new ClientServerMessage(Command.GET_MY_NOTIFICATIONS, t.getIdNumber()));
     }
 
+    /**
+     * Stops the notification polling task if it is currently running.
+     */
     public void stopPolling() {
         if (pollingScheduler != null && !pollingScheduler.isShutdown()) {
             pollingScheduler.shutdownNow();
@@ -83,6 +118,12 @@ public class TravelerFrameController implements Initializable, ClientMessageHand
     // Handle server response
     // ─────────────────────────────────────────────
 
+    /**
+     * Handles server responses related to traveler notifications.
+     * If unread notifications are received, the first notification is displayed in a popup.
+     *
+     * @param msg the message received from the server
+     */
     @Override
     @SuppressWarnings("unchecked")
     public void handleMessage(ClientServerMessage msg) {
@@ -97,6 +138,11 @@ public class TravelerFrameController implements Initializable, ClientMessageHand
         // Nothing to do here — popup is already closed by the time this arrives
     }
 
+    /**
+     * Handles server disconnection by stopping the notification polling task.
+     *
+     * @param reason the reason for the disconnection
+     */
     @Override
     public void onDisconnected(String reason) {
         stopPolling();
@@ -106,6 +152,12 @@ public class TravelerFrameController implements Initializable, ClientMessageHand
     // Popup window
     // ─────────────────────────────────────────────
 
+    /**
+     * Displays a popup window for a traveler notification.
+     * The popup allows the traveler to respond to the notification or close it.
+     *
+     * @param notificationRow the notification data received from the server
+     */
     private void showNotificationPopup(ArrayList<String> notificationRow) {
         try {
             popupShowing = true;
@@ -144,11 +196,31 @@ public class TravelerFrameController implements Initializable, ClientMessageHand
     // Navigation
     // ─────────────────────────────────────────────
 
+    /**
+     * Opens the profile screen for the logged-in traveler.
+     */
     @FXML private void showProfile()      { ProfileController.setContext("traveler"); loadPage("Profile.fxml"); }
+    /**
+     * Opens the order-a-visit screen.
+     */
     @FXML private void showOrderVisit()   { loadPage("OrderVisit.fxml"); }
+    /**
+     * Opens the traveler orders screen.
+     */
     @FXML private void showViewOrders()   { loadPage("TravelerOrdersFrame.fxml"); }
+    /**
+     * Opens the traveler waiting list screen.
+     */
     @FXML private void showWaitingList()  { loadPage("TravelerWaitingList.fxml"); }
+    /**
+     * Opens the exit visit screen.
+     */
+    @FXML private void showExitVisit()     { loadPage("TravelerExitVisit.fxml"); }
 
+    /**
+     * Logs out the currently logged-in traveler, stops notification polling,
+     * clears the traveler session, and closes the traveler frame.
+     */
     @FXML
     private void handleLogout() {
         stopPolling();
@@ -162,6 +234,11 @@ public class TravelerFrameController implements Initializable, ClientMessageHand
         mainBorderPane.getScene().getWindow().hide();
     }
 
+    /**
+     * Loads the requested FXML page into the center area of the traveler frame.
+     *
+     * @param fxml the FXML file name to load
+     */
     private void loadPage(String fxml) {
         try { NavigationManager.openPageInCenter(mainBorderPane, fxml); }
         catch (Exception e) { e.printStackTrace(); }

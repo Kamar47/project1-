@@ -23,6 +23,17 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 
+/**
+ * JavaFX controller for the Walk-in Visit screen (ParkWorkerUnorderedVisit.fxml).
+ * <p>
+ * Allows park workers to register a walk-in (unplanned) visit when space is available
+ * in the park's walk-in gap ({@code gap_for_walkins}). The visitor does not need a
+ * prior booking. The server checks atomically whether sufficient walk-in capacity
+ * remains and records the visit if so.
+ * </p>
+ *
+ * @author Group 11
+ */
 public class ParkWorkerUnorderedVisitController implements Initializable, ClientMessageHandler {
     @FXML private TextField travelerIdField, firstNameField, lastNameField;
     @FXML private TextField visitorsField, emailField, phoneField;
@@ -32,6 +43,14 @@ public class ParkWorkerUnorderedVisitController implements Initializable, Client
     private int walkinsUsedToday = 0;
     private String currentAction;
     
+    /**
+     * Initializes the walk-in visit screen.
+     * The method prepares the visit type options, connects field listeners for price updates,
+     * and loads the assigned park details from the server.
+     *
+     * @param url the location used to resolve relative paths
+     * @param rb the resources used to localize the screen
+     */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         typeCombo.setItems(FXCollections.observableArrayList("walk_in", "walk_in_group"));
@@ -50,6 +69,10 @@ public class ParkWorkerUnorderedVisitController implements Initializable, Client
         }
     }
 
+    /**
+     * Updates the displayed walk-in visit price according to the selected visit type,
+     * number of visitors, and the park's full ticket price.
+     */
     private void updatePrice() {
         if (currentPark == null) return;
         try {
@@ -59,6 +82,11 @@ public class ParkWorkerUnorderedVisitController implements Initializable, Client
         } catch (Exception e) { priceLabel.setText("--"); }
     }
 
+    /**
+     * Handles creation of a walk-in visit.
+     * The method validates the entered traveler and visit details, calculates the price,
+     * creates an order object, and sends a walk-in order request to the server.
+     */
     @FXML
     private void handleOrder() {
     	if (!ClientUI.isServerConnected()) {
@@ -94,8 +122,21 @@ public class ParkWorkerUnorderedVisitController implements Initializable, Client
         ClientUI.client.sendMessage(new ClientServerMessage(Command.WALKIN_ORDER, order));
     }
 
+    /**
+     * Displays an error message on the walk-in visit screen.
+     *
+     * @param msg the error message to display
+     */
     private void showError(String msg) { statusLabel.setText(msg); statusLabel.setStyle("-fx-text-fill: #e94560;"); }
 
+    /**
+     * Handles server responses for loading park details, loading today's walk-in usage,
+     * and creating a walk-in order.
+     * The method updates the remaining walk-in capacity, displays invoice information,
+     * or shows an error message according to the server response.
+     *
+     * @param msg the message received from the server
+     */
     @Override
     public void handleMessage(ClientServerMessage msg) {
         Platform.runLater(() -> {
@@ -135,11 +176,19 @@ public class ParkWorkerUnorderedVisitController implements Initializable, Client
         });
     }
 
+    /**
+     * Clears all input fields after a walk-in visit is successfully processed.
+     */
     private void clearFields() {
         travelerIdField.clear(); firstNameField.clear(); lastNameField.clear();
         visitorsField.clear(); emailField.clear(); phoneField.clear();
     }
 
+    /**
+     * Handles server disconnection by displaying the disconnection reason on the screen.
+     *
+     * @param reason the reason for the disconnection
+     */
     @Override
     public void onDisconnected(String reason) { Platform.runLater(() -> showError(reason)); }
 }

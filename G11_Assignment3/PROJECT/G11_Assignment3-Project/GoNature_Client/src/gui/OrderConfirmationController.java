@@ -7,11 +7,29 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
+/**
+ * JavaFX controller for the Order Confirmation screen (OrderConfirmation.fxml).
+ * <p>
+ * Displayed after a successful booking. Shows the order details (park, date, time,
+ * visitors, total price) along with the unique confirmation code and a QR code
+ * generated from that code using {@link QRCodeGenerator}.
+ * The traveler presents this QR code at the park entrance.
+ * </p>
+ *
+ * @author Group 11
+ */
 public class OrderConfirmationController {
     @FXML private Label dateLabel, timeLabel, parkLabel, typeLabel, visitorsLabel,
                         statusLabel, priceLabel, orderNumberLabel, confirmationCodeLabel;
     @FXML private StackPane qrPane;
 
+    /**
+     * Displays the confirmed order details on the confirmation screen.
+     * The method fills the order information labels and generates a QR code
+     * from the order confirmation code.
+     *
+     * @param order the confirmed order to display
+     */
     public void setOrder(Order order) {
         dateLabel.setText(order.getVisitDate());
         timeLabel.setText(order.getVisitTime());
@@ -36,6 +54,12 @@ public class OrderConfirmationController {
         }
     }
 
+    /**
+     * Converts the internal order type value into a user-friendly display label.
+     *
+     * @param type the internal order type value
+     * @return the formatted order type label
+     */
     private String formatType(String type) {
         if (type == null) return "";
         switch (type) {
@@ -48,6 +72,9 @@ public class OrderConfirmationController {
         }
     }
 
+    /**
+     * Closes the order confirmation window and returns the traveler to the main frame.
+     */
     @FXML
     private void handleHome() {
         Stage stage = (Stage) orderNumberLabel.getScene().getWindow();

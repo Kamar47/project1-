@@ -19,6 +19,17 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 
+/**
+ * JavaFX controller for the traveler's Waiting List screen (TravelerWaitingList.fxml).
+ * <p>
+ * Shows all orders that are currently on the waitlist for the logged-in traveler.
+ * The traveler may remove an order from the waitlist (cancel their place) from this screen.
+ * When a spot becomes available, the server sends a {@code waitlist_available} notification
+ * and the traveler is prompted via {@link NotificationPopupController} to confirm within 1 hour.
+ * </p>
+ *
+ * @author Group 11
+ */
 public class TravelerWaitingListController implements Initializable, ClientMessageHandler {
     @FXML private TableView<Order> waitlistTable;
     @FXML private TableColumn<Order, Integer> colId, colVisitors;
@@ -26,6 +37,13 @@ public class TravelerWaitingListController implements Initializable, ClientMessa
     @FXML private Label statusLabel;
     private ObservableList<Order> waitlistData = FXCollections.observableArrayList();
 
+    /**
+     * Initializes the traveler waiting list screen.
+     * The method prepares the waitlist table columns and loads the traveler's waiting list orders.
+     *
+     * @param url the location used to resolve relative paths
+     * @param rb the resources used to localize the screen
+     */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         colId.setCellValueFactory(new PropertyValueFactory<>("orderId"));
@@ -38,6 +56,11 @@ public class TravelerWaitingListController implements Initializable, ClientMessa
         loadWaitlist();
     }
 
+    /**
+     * Loads all orders of the logged-in traveler and displays only the orders
+     * that are currently in the waiting list.
+     * If the server is disconnected, an error message is displayed.
+     */
     @FXML
     public void loadWaitlist() {
     	if (!ClientUI.isServerConnected()) {
@@ -50,6 +73,10 @@ public class TravelerWaitingListController implements Initializable, ClientMessa
         ClientUI.client.sendMessage(new ClientServerMessage(Command.GET_ALL_ORDERS_BY_TRAVELER, id));
     }
 
+    /**
+     * Handles removal of the selected order from the waiting list.
+     * The method validates that an order is selected and sends a cancellation request to the server.
+     */
     @FXML
     private void handleRemove() {
     	if (!ClientUI.isServerConnected()) {
@@ -63,6 +90,12 @@ public class TravelerWaitingListController implements Initializable, ClientMessa
         ClientUI.client.sendMessage(new ClientServerMessage(Command.CANCEL_ORDER, selected.getOrderId()));
     }
 
+    /**
+     * Handles server responses for loading and removing waiting list orders.
+     * The method filters the traveler's orders and displays only orders with waitlist status.
+     *
+     * @param msg the message received from the server
+     */
     @Override
     @SuppressWarnings("unchecked")
     public void handleMessage(ClientServerMessage msg) {
@@ -82,6 +115,11 @@ public class TravelerWaitingListController implements Initializable, ClientMessa
         });
     }
 
+    /**
+     * Handles server disconnection by displaying the disconnection reason on the screen.
+     *
+     * @param reason the reason for the disconnection
+     */
     @Override
     public void onDisconnected(String reason) { Platform.runLater(() -> statusLabel.setText(reason)); }
 }
